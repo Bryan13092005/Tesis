@@ -34,13 +34,6 @@ export function AuthProvider({ children }) {
     }
   }, [])
 
-  const registrar = async (email, password) => {
-    return await supabase.auth.signUp({
-      email,
-      password,
-    })
-  }
-
   const iniciarSesion = async (email, password) => {
     return await supabase.auth.signInWithPassword({
       email,
@@ -57,7 +50,6 @@ export function AuthProvider({ children }) {
       value={{
         user,
         loading,
-        registrar,
         iniciarSesion,
         cerrarSesion,
       }}
