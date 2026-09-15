@@ -4,6 +4,9 @@ require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT;
+require('./config/mqttClient');
+require('./service/sensores.service');
+require('./service/historialSensores.service');
 
 const authRoutes = require('./routes/users/auth.routes.js');
 const accionesRoutes=require('./routes/admin/acciones.routes.js');

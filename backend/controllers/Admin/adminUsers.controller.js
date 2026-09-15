@@ -245,8 +245,7 @@ const cambiarEstadoUsuario = async (req, res) => {
 
 const crearUsuario = async (req, res) => {
     try {
-        const { nombre, apellido, email, password, rol } = req.body;
-
+        const { nombre, apellido, email, password, rol, permisos} = req.body;
         // Validaciones básicas de entrada
         if (!nombre || !apellido || !email || !password || !rol) {
             return res.status(400).json({
@@ -255,6 +254,12 @@ const crearUsuario = async (req, res) => {
             });
         }
 
+        // permisos :{
+        //     acceso1: true,
+        //     acceso2: false,
+        //     ...
+        // }
+        
         // ==========================================
         // CREAR USUARIO EN SUPABASE AUTH
         // ==========================================
@@ -262,7 +267,7 @@ const crearUsuario = async (req, res) => {
         const { data, error: supabaseError } = await supabaseAdminClient.auth.admin.createUser({
             email,
             password,
-            user_metadata: { nombre, apellido, rol }
+            user_metadata: { nombre, apellido, rol, permisos }
         });
 
         if (supabaseError) {

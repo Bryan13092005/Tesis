@@ -61,7 +61,6 @@ const agregarAcceso = async (req, res) => {
 
         const query = `INSERT INTO credenciales (puerta_id, tipo, identificador, activo, usosPermitidos) VALUES ($1, $2, $3, $4, $5) RETURNING *`;
         
-        // CORRECCIÓN: Cambiado 'valor' por 'valorFinal' para guardar el RFID formateado
         const values = ['aee70eea-9efa-4d1f-9cbe-f94c62a51758', tipo, valorFinal, true, usosPermitidos];
 
         const resultado = await pool.query(query, values);
@@ -87,12 +86,13 @@ const agregarAcceso = async (req, res) => {
 
 const obtenerAccesos = async (req, res) => {
     try {
+        //Se obtienen todos porque el admin podrá ver en su panel todos los accesos, sin importar si están activos o no.
         const resultado = await pool.query('SELECT * FROM credenciales');
 
         if (resultado.rows.length === 0) {
             return res.status(404).json({
                 success: false,
-                error: 'No se encontraron accesos'
+                error: 'No se encontraron accesos disponibles'
             });
         }
 
@@ -157,8 +157,46 @@ const cambiarEstadoAcceso = async (req, res) => {
     }
 }
 
+const eliminarAcceso = async (req, res) => {
+    try {
+        const accesoId = req.params.id;
+
+        if (!accesoId) {
+            return res.status(400).json({
+                success: false,
+                error: 'El ID del acceso es requerido'
+            });
+        }
+
+        const query = `DELETE FROM credenciales WHERE id = $1 RETURNING *`;
+        const values = [accesoId];
+
+        const resultado = await pool.query(query, values);
+
+        if (resultado.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: 'Acceso no encontrado'
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: 'Acceso eliminado exitosamente',
+            data: resultado.rows[0]
+        });
+
+    } catch (error) {
+        console.error('Error al eliminar acceso:', error);
+        return res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    }
+}
+
+//no se pueden actualizar accesos, solo se pueden agregar, eliminar y cambiar su estado (activo/inactivo). Por eso no hay un método de actualizar acceso.
+
 module.exports = {
     agregarAcceso,
     obtenerAccesos,
-    cambiarEstadoAcceso
+    cambiarEstadoAcceso,
+    eliminarAcceso
 }
