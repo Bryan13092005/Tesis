@@ -30,3 +30,7 @@ const verPerfil = async (req, res) => {
         return res.status(500).json({ success: false, error: 'Error interno del servidor' });
     }
 }
+
+module.exports = {
+    verPerfil
+};

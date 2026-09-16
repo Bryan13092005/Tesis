@@ -125,8 +125,76 @@ function autorizarRol(rolNecesario) {
     };
 }
 
+function accionesPermitidas(permisoNecesario) {
+
+    return async function (req, res, next) {
+
+        const usuarioId = req.user.id;
+
+        try {
+
+            const resultado = await pool.query(
+                'SELECT permisos FROM perfiles WHERE id = $1',
+                [usuarioId]
+            );
+
+            if (resultado.rows.length === 0) {
+                return res.status(404).json({
+                    success: false,
+                    error: 'Perfil de usuario no encontrado'
+                });
+            }
+
+            const { permisos } = resultado.rows[0];
+
+            if (!permisos) {
+                return res.status(403).json({
+                    success: false,
+                    error: 'No tienes permisos asignados'
+                });
+            }
+
+            // Acceso total
+            if (permisos === 'ALL') {
+                return next();
+            }
+
+            let permisosUsuario;
+
+            try {
+                permisosUsuario = JSON.parse(permisos);
+            } catch (error) {
+                return res.status(500).json({
+                    success: false,
+                    error: 'Formato de permisos inválido'
+                });
+            }
+
+            // Verificar si el permiso solicitado existe
+            if (!permisosUsuario.includes(permisoNecesario)) {
+                return res.status(403).json({
+                    success: false,
+                    error: 'No tienes permiso para realizar esta acción'
+                });
+            }
+
+            next();
+
+        } catch (error) {
+
+            console.error('Error verificando permisos:', error);
+
+            return res.status(500).json({
+                success: false,
+                error: 'Error interno del servidor'
+            });
+        }
+    };
+}
+
 
 module.exports = {
     verificarAuth,
-    autorizarRol
+    autorizarRol,
+    accionesPermitidas
 };

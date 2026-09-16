@@ -27,7 +27,24 @@ client.on('connect', () => {
             return;
         }
 
-        console.log('Backend suscrito a los topics');
+        console.log('Backend suscrito a los topics de garage');
+    });
+
+    client.subscribe([
+        'casa/luz/baño/estado',
+        'casa/luz/cocina/estado',
+        'casa/luz/sala/estado',
+        'casa/luz/dormitorio/estado',
+        'casa/luz/pasillo/estado',
+        'casa/acceso'
+    ], (error) => {
+
+        if (error) {
+            console.error('Error al suscribirse:', error);
+            return;
+        }
+
+        console.log('Backend suscrito a los topics de casa');
     });
 });
 

@@ -247,18 +247,18 @@ const crearUsuario = async (req, res) => {
     try {
         const { nombre, apellido, email, password, rol, permisos} = req.body;
         // Validaciones básicas de entrada
-        if (!nombre || !apellido || !email || !password || !rol) {
+        if (!nombre || !apellido || !email || !password || !rol || !permisos) {
             return res.status(400).json({
                 success: false,
-                error: 'Todos los campos (nombre, apellido, email, password, rol) son requeridos.'
+                error: 'Todos los campos (nombre, apellido, email, password, rol, permisos) son requeridos.'
             });
         }
 
-        // permisos :{
-        //     acceso1: true,
-        //     acceso2: false,
+        // permisos :[
+        //     acceso1,
+        //     acceso2,
         //     ...
-        // }
+        // ]
         
         // ==========================================
         // CREAR USUARIO EN SUPABASE AUTH
@@ -267,7 +267,7 @@ const crearUsuario = async (req, res) => {
         const { data, error: supabaseError } = await supabaseAdminClient.auth.admin.createUser({
             email,
             password,
-            user_metadata: { nombre, apellido, rol, permisos }
+            user_metadata: { nombre, apellido, rol, permisos: JSON.stringify(permisos) }
         });
 
         if (supabaseError) {
@@ -326,7 +326,37 @@ const cambiarMiClave = async (req, res) => {
     }
 }
 
+const cambiarPermisosUsuario = async (req, res) => {
+    const usuarioId = req.params.id;
+    const { nuevosPermisos } = req.body;
 
+    if(!nuevosPermisos) {
+        return res.status(400).json({
+            success: false,
+            error: 'Los nuevos permisos son requeridos.'
+        });
+    }
+
+    // ==========================================
+    // ACTUALIZAR PERMISOS EN SUPABASE
+    // ==========================================
+
+    try{
+        await pool.query(
+            `UPDATE perfiles
+            SET permisos = $1
+            WHERE id = $2 RETURNING *`,
+            [JSON.stringify(nuevosPermisos), usuarioId]
+        );
+
+    } catch (error) {
+        console.error('Error actualizando permisos en Postgres:', error);
+        return res.status(500).json({
+            success: false,
+            error: 'Error interno del servidor al actualizar permisos'
+        });
+    }
+}
 
 module.exports = {
     verUsuarios,
@@ -336,5 +366,6 @@ module.exports = {
     actualizarPerfilUsuario,
     cambiarEstadoUsuario,
     crearUsuario,
-    cambiarMiClave
+    cambiarMiClave,
+    cambiarPermisosUsuario
 };
