@@ -134,7 +134,7 @@ function accionesPermitidas(permisoNecesario) {
         try {
 
             const resultado = await pool.query(
-                'SELECT permisos FROM perfiles WHERE id = $1',
+                'SELECT "permisosAcceso" FROM perfiles WHERE id = $1',
                 [usuarioId]
             );
 
@@ -144,8 +144,10 @@ function accionesPermitidas(permisoNecesario) {
                     error: 'Perfil de usuario no encontrado'
                 });
             }
+            console.log('Permisos del usuario:', resultado.rows[0].permisosAcceso);
 
-            const { permisos } = resultado.rows[0];
+            const permisos = resultado.rows[0].permisosAcceso;
+            console.log('Permisos del usuario:', permisos);
 
             if (!permisos) {
                 return res.status(403).json({
@@ -155,7 +157,7 @@ function accionesPermitidas(permisoNecesario) {
             }
 
             // Acceso total
-            if (permisos === 'ALL') {
+            if (permisos.trim() === 'ALL') {
                 return next();
             }
 

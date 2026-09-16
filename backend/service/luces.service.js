@@ -26,7 +26,7 @@ const topicEstadoLuzPasillo    = "casa/luz/pasillo/estado";
 
 
 client.on('message', async (topic, message) => {
-
+    console.log(`Mensaje recibido en el topic ${topic}: ${message.toString()}`);
     const valor = message.toString();
 
     try {
@@ -34,10 +34,10 @@ client.on('message', async (topic, message) => {
         switch (topic) {
 
             case topicEstadoLuzBaño:
-                if (Number(valor) === 1) {
-                estadosActuales.bano = TRUE;
+                if (valor === 'ON') {
+                estadosActuales.bano = true;
                 } else {
-                estadosActuales.bano = FALSE;
+                estadosActuales.bano = false;
                 }
                 await pool.query(`
                     UPDATE ${tableName}
@@ -49,10 +49,10 @@ client.on('message', async (topic, message) => {
 
             case topicEstadoLuzDormitorio:
 
-                if (Number(valor) === 1) {
-                    estadosActuales.dormitorio = TRUE;
+                if (valor === 'ON') {
+                    estadosActuales.dormitorio = true;
                 } else {
-                    estadosActuales.dormitorio = FALSE;
+                    estadosActuales.dormitorio = false;
                 }
                 await pool.query(`
                     UPDATE ${tableName}
@@ -64,10 +64,10 @@ client.on('message', async (topic, message) => {
 
             case topicEstadoLuzSala:
 
-                if (Number(valor) === 1) {
-                    estadosActuales.sala = TRUE;
+                if (valor === 'ON') {
+                    estadosActuales.sala = true;
                 } else {
-                    estadosActuales.sala = FALSE;
+                    estadosActuales.sala = false;
                 }
                 await pool.query(`
                     UPDATE ${tableName}
@@ -78,10 +78,10 @@ client.on('message', async (topic, message) => {
 
             case topicEstadoLuzCocina:
 
-                if (Number(valor) === 1) {
-                    estadosActuales.cocina = TRUE;
+                if (valor === 'ON') {
+                    estadosActuales.cocina = true;
                 } else {
-                    estadosActuales.cocina = FALSE;
+                    estadosActuales.cocina = false;
                 }
                 await pool.query(`
                     UPDATE ${tableName}
@@ -92,10 +92,10 @@ client.on('message', async (topic, message) => {
 
             case topicEstadoLuzPasillo:
 
-                if (Number(valor) === 1) {
-                    estadosActuales.pasillo = TRUE;
+                if (valor === 'ON') {
+                    estadosActuales.pasillo = true;
                 } else {
-                    estadosActuales.pasillo = FALSE;
+                    estadosActuales.pasillo = false;
                 }
                 await pool.query(`
                     UPDATE ${tableName}

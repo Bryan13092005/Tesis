@@ -1,5 +1,5 @@
 const { pool } = require('../../config/supabase');
-const supabaseAdminClient = require('../../config/supabaseAdmin');
+const {supabaseAdminClient} = require('../../config/supabaseAdmin');
 
 const verUsuarios = async (req, res) => {
     try{
@@ -267,7 +267,8 @@ const crearUsuario = async (req, res) => {
         const { data, error: supabaseError } = await supabaseAdminClient.auth.admin.createUser({
             email,
             password,
-            user_metadata: { nombre, apellido, rol, permisos: JSON.stringify(permisos) }
+            user_metadata: { nombre, apellido, rol, permisos: JSON.stringify(permisos) },
+            email_confirm: true
         });
 
         if (supabaseError) {
@@ -276,6 +277,12 @@ const crearUsuario = async (req, res) => {
                 error: `Error al crear usuario en Supabase Auth: ${supabaseError.message}`
             });
         }
+
+        return res.status(201).json({
+            success: true,
+            message: 'Usuario creado correctamente',
+            usuario: data.user
+        });
     }catch (error) {
         console.error('Error al crear usuario:', error);
         return res.status(500).json({ success: false, error: 'Error interno del servidor' });
@@ -344,7 +351,7 @@ const cambiarPermisosUsuario = async (req, res) => {
     try{
         await pool.query(
             `UPDATE perfiles
-            SET permisos = $1
+            SET "permisosAcceso" = $1
             WHERE id = $2 RETURNING *`,
             [JSON.stringify(nuevosPermisos), usuarioId]
         );

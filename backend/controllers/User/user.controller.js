@@ -1,4 +1,4 @@
-const { pool } = require('../config/supabase');
+const { pool } = require('../../config/supabase');
 
 const verPerfil = async (req, res) => {
     try {

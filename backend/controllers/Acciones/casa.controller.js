@@ -1,4 +1,5 @@
 const {publicarMQTT} = require('../../service/publicarMQTT.service');
+const { pool } = require('../../config/supabase');
 
 const topics = {
     baño: 'casa/luz/baño',
@@ -18,8 +19,7 @@ const ids = {
 
 const cambiarLuz = async(req, res) => {
     const userID = req.user.id; // Obtener el usuario autenticado desde el middleware de autenticación
-    const { habitacion } = req.params;
-    const { estado } = req.body;
+    const { estado,habitacion } = req.body;
 
     if (!(habitacion in topics) || !(habitacion in ids)) {
         return res.status(400).json({
@@ -40,7 +40,7 @@ const cambiarLuz = async(req, res) => {
     publicarMQTT(topics[habitacion], mensaje);
 
     try {
-        const query = `INSERT INTO historial_Luces (user_id, dispositivo, estado, dispositivo_id) VALUES ($1, $2, $3, $4)`;
+        const query = `INSERT INTO "historial_Luces" (user_id, dispositivo, estado, dispositivo_id) VALUES ($1, $2, $3, $4)`;
         const values = [userID, habitacion, estado, ids[habitacion]];
         await pool.query(query, values);
     } catch (error) {
