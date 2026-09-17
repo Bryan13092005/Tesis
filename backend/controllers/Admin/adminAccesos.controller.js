@@ -1,14 +1,18 @@
 const { pool } = require('../../config/supabase');
+const { publicarMQTT } = require('../../service/publicarMQTT.service');
+
+const topicAccesosCodigos = '/accesos/codigos';
+const topicAccesosRFID = '/accesos/RFID';
 
 const agregarAcceso = async (req, res) => {
     try {
-        const { tipo, valor, usosPermitidos } = req.body;
+        const { tipo, valor, usosPermitidos, nombreUsuario } = req.body;
 
         // 1. Validar que los campos obligatorios vengan en la petición
-        if (!tipo || !valor || usosPermitidos === undefined) {
+        if (!tipo || !valor || usosPermitidos === undefined || !nombreUsuario) {
             return res.status(400).json({
                 success: false,
-                error: 'Los campos tipo, valor y usosPermitidos son requeridos.'
+                error: 'Los campos tipo, valor, usosPermitidos y nombre de usuario son requeridos.'
             });
         }
 
@@ -59,9 +63,9 @@ const agregarAcceso = async (req, res) => {
                 break;
         }
 
-        const query = `INSERT INTO credenciales (puerta_id, tipo, identificador, activo, usosPermitidos) VALUES ($1, $2, $3, $4, $5) RETURNING *`;
+        const query = `INSERT INTO credenciales (puerta_id, tipo, identificador, activo, "usosPermitidos","nombreUsuario") VALUES ($1, $2, $3, $4, $5,$6) RETURNING *`;
         
-        const values = ['aee70eea-9efa-4d1f-9cbe-f94c62a51758', tipo, valorFinal, true, usosPermitidos];
+        const values = ['aee70eea-9efa-4d1f-9cbe-f94c62a51758', tipo, valorFinal, true, usosPermitidos,nombreUsuario];
 
         const resultado = await pool.query(query, values);
 
@@ -72,6 +76,13 @@ const agregarAcceso = async (req, res) => {
             });
         }
         
+        if(tipo==='rfid'){
+            publicarMQTT(topicAccesosRFID,`AGREGAR|${valorFinal}`);
+        }
+
+        if(tipo==='pin'){
+            publicarMQTT(topicAccesosCodigos,`AGREGAR|${valorFinal}`);
+        }
         return res.status(201).json({
             success: true,
             data: resultado.rows[0]
@@ -82,7 +93,6 @@ const agregarAcceso = async (req, res) => {
         return res.status(500).json({ success: false, error: 'Error interno del servidor' });
     }
 }
-
 
 const obtenerAccesos = async (req, res) => {
     try {
@@ -110,15 +120,14 @@ const obtenerAccesos = async (req, res) => {
 const cambiarEstadoAcceso = async (req, res) => {
     try {
         const accesoId = req.params.id;
+        const {tipo,activo} = req.body;
 
-        if (!accesoId) {
+        if (!accesoId || !tipo || !(tipo==='pin' || tipo==='rfid')) {
             return res.status(400).json({
                 success: false,
-                error: 'El ID del acceso es requerido'
+                error: 'El ID y tipo del acceso son requeridos'
             });
         }
-
-        const { activo } = req.body;
 
         if (activo === undefined) {
             return res.status(400).json({
@@ -127,14 +136,14 @@ const cambiarEstadoAcceso = async (req, res) => {
             });
         }
 
-         if (typeof activo !== 'boolean') {
+        if (typeof activo !== 'boolean') {
             return res.status(400).json({
                 success: false,
                 error: 'El nuevo estado debe ser un valor booleano.'
             });
         }
 
-        const query = `UPDATE credenciales SET activo = $1 WHERE id = $2 RETURNING *`;
+        const query = `UPDATE credenciales SET activo = $1 WHERE id = $2 AND "usosPermitidos">0 RETURNING identificador`;
         const values = [activo, accesoId];
 
         const resultado = await pool.query(query, values);
@@ -142,8 +151,22 @@ const cambiarEstadoAcceso = async (req, res) => {
         if (resultado.rows.length === 0) {
             return res.status(404).json({
                 success: false,
-                error: 'Acceso no encontrado'
+                error: 'Acceso no encontrado o sin Intentos'
             });
+        }
+
+        const valor=resultado.rows[0].identificador;
+
+        if(activo && tipo==='pin'){
+            publicarMQTT(topicAccesosCodigos,`DESBLOQUEAR|${valor}`);
+        }if(activo && tipo==='rfid'){
+            publicarMQTT(topicAccesosRFID,`DESBLOQUEAR|${valor}`);
+        }
+
+        if(!activo && tipo==='pin'){
+            publicarMQTT(topicAccesosCodigos,`BLOQUEAR|${valor}`);
+        }if(!activo && tipo==='rfid'){
+            publicarMQTT(topicAccesosRFID,`BLOQUEAR|${valor}`);
         }
 
         return res.status(200).json({
@@ -161,14 +184,7 @@ const eliminarAcceso = async (req, res) => {
     try {
         const accesoId = req.params.id;
 
-        if (!accesoId) {
-            return res.status(400).json({
-                success: false,
-                error: 'El ID del acceso es requerido'
-            });
-        }
-
-        const query = `DELETE FROM credenciales WHERE id = $1 RETURNING *`;
+        const query = `DELETE FROM credenciales WHERE id = $1 RETURNING tipo,identificador`;
         const values = [accesoId];
 
         const resultado = await pool.query(query, values);
@@ -178,6 +194,15 @@ const eliminarAcceso = async (req, res) => {
                 success: false,
                 error: 'Acceso no encontrado'
             });
+        }
+
+        const tipo=resultado.rows[0].tipo;
+        const valor=resultado.rows[0].identificador;
+
+        if(tipo==='pin'){
+            publicarMQTT(topicAccesosCodigos,`ELIMINAR|${valor}`);
+        }else{
+            publicarMQTT(topicAccesosRFID,`ELIMINAR|${valor}`);
         }
 
         return res.status(200).json({
@@ -192,11 +217,47 @@ const eliminarAcceso = async (req, res) => {
     }
 }
 
+const actualizarNumeroIntentos = async (req,res)=>{
+    const id=req.params.id;
+    const {numero}=req.body;
+
+    if (!id || (numero !== null && numero <= 0)){
+        return res.status(400).json({
+            error:'El numero de intentos debe ser mayor que 0 o null'
+        });
+    }
+
+    try{
+        const query=`UPDATE credenciales SET "usosPermitidos"=$1, activo=TRUE WHERE id=$2 RETURNING identificador`;
+        const valores=[numero,id];
+
+        const respuesta=await pool.query(query,valores);
+
+        if(respuesta.rows.length===0){
+            return res.status(400).json({
+                error:"NO SE ENCONTRO LA CREDENCIAL"
+            });
+        }
+
+        const identificador=respuesta.rows[0].identificador;
+
+        publicarMQTT(topicAccesosCodigos,`DESBLOQUEAR|${identificador}`);
+
+        return res.status(200).json({
+            status:"completado"
+        });
+    }catch(err){
+        console.log(err);
+        return res.status(500).json({error:"error interno del servidor"});
+    }
+}
+
 //no se pueden actualizar accesos, solo se pueden agregar, eliminar y cambiar su estado (activo/inactivo). Por eso no hay un método de actualizar acceso.
 
 module.exports = {
     agregarAcceso,
     obtenerAccesos,
     cambiarEstadoAcceso,
-    eliminarAcceso
+    eliminarAcceso,
+    actualizarNumeroIntentos
 }

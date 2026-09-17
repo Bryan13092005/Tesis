@@ -1,5 +1,6 @@
 const {publicarMQTT} = require('../../service/publicarMQTT.service');
 const { pool } = require('../../config/supabase');
+const client =require('../../config/mqttClient');
 
 const topics = {
     baño: 'casa/luz/baño',
@@ -16,6 +17,9 @@ const ids = {
     cocina: 'a68f2d16-aa6c-48a2-8e6e-7bacf2b9383a',
     pasillo: '34e68874-95f5-4aff-ac96-125cec25a4c3'
 };
+
+const topicoComandoGarage = "casa/garaje/comando";
+const topicEstadoGarage='casa/garaje/estado';
 
 const cambiarLuz = async(req, res) => {
     const userID = req.user.id; // Obtener el usuario autenticado desde el middleware de autenticación
@@ -52,7 +56,53 @@ const cambiarLuz = async(req, res) => {
         estado
     });
 }
+async function guardarHistorial(id) {
+    try{
+        const query='INSERT INTO historial_ingresos(id_usuario,forma_ingreso,puerta) VALUES($1,$2,$3) RETURNING *';
+        const valores=[id,'sistema_web','GARAGE'];
+
+        const respuesta=await pool.query(query,valores);
+
+        if(respuesta.rows.length===0){
+            return false;
+        }
+
+        return true;
+    }catch(err){
+        console.log(err);
+    }
+}
+const abrirCerrarGarageAutomatico= async(req,res)=>{ //PERMISO GARAGE
+    const id = req.user.id;
+    
+    publicarMQTT(topicoComandoGarage,'ABRIR_GARAJE');
+    
+    client.subscribe(topicEstadoGarage, (error) => {
+
+        if (error) {
+            console.error('Error al suscribirse al topic:', error);
+        } else {
+            console.log(`Suscrito al topic: ${topicEstadoGarage}`);
+        }
+
+    });
+
+    client.on('message', async (receivedTopic, message) => {
+
+        if (receivedTopic !== topicEstadoGarage) {
+            return;
+        }
+
+        const estado = message.toString();
+
+        if(estado==='ABIERTO'){ 
+            guardarHistorial(id)? res.status(200).json({status:true,mensaje:'ABIERTO'}) : res.status(400).json({status:false,mensaje:'ERROR AL GUARDAR EL HISTORIAL'})
+        }
+    });
+
+}
 
 module.exports = {
-  cambiarLuz
+  cambiarLuz,
+  abrirCerrarGarageAutomatico
 };

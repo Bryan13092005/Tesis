@@ -8,6 +8,12 @@ require('./config/mqttClient');
 require('./service/sensores.service');
 require('./service/historialSensores.service');
 require('./service/luces.service.js');
+require('./service/escucharCodigos.service.js');
+require('./service/historial_Ingresos.service.js');
+
+const { escucharInicio } = require('./service/escucharInicio.service.js');
+
+escucharInicio();
 
 const authRoutes = require('./routes/auth.routes.js');
 const adminUserRoutes=require('./routes/admin/admin.users.routes.js');

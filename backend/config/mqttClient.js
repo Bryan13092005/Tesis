@@ -17,9 +17,7 @@ client.on('connect', () => {
         'casa/garaje/temperatura',
         'casa/garaje/humedad_ambiente',
         'casa/garaje/gas',
-        'casa/garaje/estado_gas',
-        'casa/puerta/estado',
-        'casa/seguridad'
+        'casa/garaje/estado_gas'
     ], (error) => {
 
         if (error) {
@@ -35,8 +33,7 @@ client.on('connect', () => {
         'casa/luz/cocina/estado',
         'casa/luz/sala/estado',
         'casa/luz/dormitorio/estado',
-        'casa/luz/pasillo/estado',
-        'casa/acceso'
+        'casa/luz/pasillo/estado'
     ], (error) => {
 
         if (error) {

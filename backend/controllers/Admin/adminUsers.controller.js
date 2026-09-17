@@ -5,10 +5,6 @@ const verUsuarios = async (req, res) => {
     try{
         const query = `SELECT * FROM perfiles`;
         const resultado = await pool.query(query);
-        res.status(200).json({
-            success: true,
-            data: resultado.rows
-        });
 
         if (resultado.rows.length === 0) {
             return res.status(404).json({
@@ -16,6 +12,11 @@ const verUsuarios = async (req, res) => {
                 error: 'No se encontraron usuarios'
             });
         }
+
+        return res.status(200).json({
+            success: true,
+            data: resultado.rows
+        });
 
     }catch (error) {
         console.error('Error al obtener usuarios:', error);
