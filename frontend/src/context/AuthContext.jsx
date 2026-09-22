@@ -15,7 +15,8 @@ export function AuthProvider({ children }) {
         console.error('Error obteniendo sesión:', error)
       }
 
-      setUser(data.session?.user ?? null)
+      const session = data.session
+      setUser(session?.user ?? null)
       setLoading(false)
     }
 
