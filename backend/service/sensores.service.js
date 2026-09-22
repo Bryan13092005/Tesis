@@ -7,9 +7,21 @@ let sensoresActuales = {
     temperatura: null,
     humedad: null,
     gas: null,
-    humedad_planta: null
+    humedad_planta: null,
+    estado_gas:null
 };
 // ESCUCHAR MENSAJES DE LOS SENSORES
+const topicoEstadoGas = "casa/garaje/estado_gas";
+
+client.subscribe(topicoEstadoGas, (error) => {
+
+    if (error) {
+        console.error('Error al suscribirse al topic:', error);
+    } else {
+        console.log(`Suscrito al topic: ${topicoEstadoGas}`);
+    }
+
+});
 
 client.on('message', async (topic, message) => {
 
@@ -65,6 +77,13 @@ client.on('message', async (topic, message) => {
                 `, [Number(valor)]);
 
                 break;
+            case topicoEstadoGas:
+
+                const estado = message.toString();
+                if(estado==='ALERTA' || estado==='NORMAL'){
+                    sensoresActuales.estado_gas=estado;
+                    await pool.query(`UPDATE ${tableName} set estado_gas=$1,fecha_hora=NOW()`,[estado]);
+                }
         }
 
     } catch (error) {

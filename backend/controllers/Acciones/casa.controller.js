@@ -20,6 +20,7 @@ const ids = {
 
 const topicoComandoGarage = "casa/garaje/comando";
 const topicEstadoGarage='casa/garaje/estado';
+const topicoEstadoGas = "casa/garaje/estado_gas";
 
 const cambiarLuz = async(req, res) => {
     const userID = req.user.id; // Obtener el usuario autenticado desde el middleware de autenticación
@@ -56,6 +57,7 @@ const cambiarLuz = async(req, res) => {
         estado
     });
 }
+
 async function guardarHistorial(id) {
     try{
         const query='INSERT INTO historial_ingresos(id_usuario,forma_ingreso,puerta) VALUES($1,$2,$3) RETURNING *';
@@ -72,7 +74,8 @@ async function guardarHistorial(id) {
         console.log(err);
     }
 }
-const abrirCerrarGarageAutomatico= async(req,res)=>{ //PERMISO GARAGE
+
+const abrirCerrarGarageAutomatico= async(req,res)=>{ //PERMISO: garage
     const id = req.user.id;
     
     publicarMQTT(topicoComandoGarage,'ABRIR_GARAJE');
@@ -102,7 +105,44 @@ const abrirCerrarGarageAutomatico= async(req,res)=>{ //PERMISO GARAGE
 
 }
 
+const enviarUltimoDatoSensores= async(req,res)=>{//PERMISO: sensores
+    try{
+        const query='SELECT * FROM "valorActual_sensores"';
+
+        const respuesta=await pool.query(query);
+
+        if (respuesta.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: 'Sin registros previos'
+            });
+        }
+
+        const temAmbiente=respuesta.rows[0].temperatura;
+        const humAmbiente=respuesta.rows[0].humedad;
+        const gas=respuesta.rows[0].gas;
+        const humPlanta=respuesta.rows[0].humedad_planta;
+        const gasEstado=respuesta.rows[0].estado_gas;
+
+        return res.status(200).json({
+            temAmbiente: temAmbiente,
+            humAmbiente: humAmbiente,
+            humPlanta: humPlanta,
+            gas: gas,
+            gasEstado: gasEstado
+        });
+
+    }catch(err){
+        console.log(err);
+        return res.status(500).json({
+            success: false,
+            mensaje: 'error del servidor'}
+        );
+    }
+}
+
 module.exports = {
   cambiarLuz,
-  abrirCerrarGarageAutomatico
+  abrirCerrarGarageAutomatico,
+  enviarUltimoDatoSensores
 };

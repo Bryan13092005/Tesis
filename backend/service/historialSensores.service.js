@@ -9,7 +9,8 @@ setInterval(async () => {
             sensoresActuales.temperatura === null &&
             sensoresActuales.humedad === null &&
             sensoresActuales.gas === null &&
-            sensoresActuales.humedad_planta === null
+            sensoresActuales.humedad_planta === null &&
+            sensoresActuales.estado_gas===null
         ) {
             console.log('Todavía no hay datos de sensores para guardar.');
             return;
@@ -20,14 +21,16 @@ setInterval(async () => {
                 temperatura,
                 humedad,
                 gas,
-                humedad_planta
+                humedad_planta,
+                estado_gas
             )
-            VALUES ($1, $2, $3, $4)
+            VALUES ($1, $2, $3, $4, $5)
         `, [
             sensoresActuales.temperatura,
             sensoresActuales.humedad,
             sensoresActuales.gas,
-            sensoresActuales.humedad_planta
+            sensoresActuales.humedad_planta,
+            sensoresActuales.estado_gas
         ]);
 
         console.log('📊 Historial de sensores guardado');
