@@ -6,7 +6,7 @@ const verPerfil = async (req, res) => {
 
         const resultado = await pool.query(
             `
-            SELECT nombre, apellido, email, rol, permisos
+            SELECT nombre, apellido, rol, "permisosAcceso"
             FROM perfiles
             WHERE id = $1
             `,
