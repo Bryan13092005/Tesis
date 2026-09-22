@@ -5,6 +5,7 @@ const esperar = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 const topicAccesosCodigos = '/accesos/codigos';
 const topicAccesosRFID = '/accesos/RFID';
+const topicoSeguridad = "casa/seguridad";
 
 function escucharInicio() {
     const topic = '/casa/principal/estado';
@@ -142,6 +143,19 @@ function escucharInicio() {
             }
 
             console.log('Sincronización de accesos terminada');
+
+            const queryModoSeguro=`SELECT resultado FROM historial_acciones ORDER BY fecha_hora ASC LIMIT 1`;
+
+            const respuestaModoSeguro=await pool.query(queryModoSeguro);
+
+            if(respuestaModoSeguro.rows.length===0){
+                return;
+            }
+
+            publicarMQTT(topicoSeguridad,respuestaModoSeguro.rows[0].resultado);
+            await esperar(500);
+
+            console.log('MODO SEGUGRO SINCRONIZADO');
 
         } catch (error) {
 

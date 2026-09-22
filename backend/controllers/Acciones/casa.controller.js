@@ -20,7 +20,10 @@ const ids = {
 
 const topicoComandoGarage = "casa/garaje/comando";
 const topicEstadoGarage='casa/garaje/estado';
-const topicoEstadoGas = "casa/garaje/estado_gas";
+
+const topicoEstadoPuerta = "casa/puerta/estado";
+const topicoComandoPuerta = "casa/puerta/comando";
+const topicoSeguridad = "casa/seguridad";
 
 const cambiarLuz = async(req, res) => {
     const userID = req.user.id; // Obtener el usuario autenticado desde el middleware de autenticación
@@ -58,10 +61,10 @@ const cambiarLuz = async(req, res) => {
     });
 }
 
-async function guardarHistorial(id) {
+async function guardarHistorial(id,puerta) {
     try{
         const query='INSERT INTO historial_ingresos(id_usuario,forma_ingreso,puerta) VALUES($1,$2,$3) RETURNING *';
-        const valores=[id,'sistema_web','GARAGE'];
+        const valores=[id,'sistema_web',puerta];
 
         const respuesta=await pool.query(query,valores);
 
@@ -99,7 +102,7 @@ const abrirCerrarGarageAutomatico= async(req,res)=>{ //PERMISO: garage
         const estado = message.toString();
 
         if(estado==='ABIERTO'){ 
-            guardarHistorial(id)? res.status(200).json({status:true,mensaje:'ABIERTO'}) : res.status(400).json({status:false,mensaje:'ERROR AL GUARDAR EL HISTORIAL'})
+            guardarHistorial(id,'GARAGE')? res.status(200).json({status:true,mensaje:'ABIERTO'}) : res.status(400).json({status:false,mensaje:'ERROR AL GUARDAR EL HISTORIAL'})
         }
     });
 
@@ -141,8 +144,80 @@ const enviarUltimoDatoSensores= async(req,res)=>{//PERMISO: sensores
     }
 }
 
+const controlPuertaPrincipal=async(req,res)=>{//PERMISO: puertaPrincipal
+    const id=req.user.id;
+    const {accion}=req.body;
+
+    accion==='ABRIR'?publicarMQTT(topicoComandoPuerta,'ABRIR_PUERTA'):res.status(400).json({mensaje: 'comando incorrecto'});
+
+    client.subscribe(topicoEstadoPuerta, (error) => {
+
+        if (error) {
+            console.error('Error al suscribirse al topic:', error);
+        } else {
+            console.log(`Suscrito al topic: ${topicoEstadoPuerta}`);
+        }
+
+    });
+
+    client.on('message', async (receivedTopic, message) => {
+
+        if (receivedTopic !== topicoEstadoPuerta) {
+            return;
+        }
+
+        const estado = message.toString();
+
+        if(estado==='ABIERTO'){ 
+            guardarHistorial(id,'PRINCIPAL')? res.status(200).json({status:true,mensaje:'ABIERTO'}) : res.status(400).json({status:false,mensaje:'ERROR AL GUARDAR EL HISTORIAL'})
+        }
+    });
+}
+
+const modoSeguro=async (req,res)=>{//PERMISO: activarBloqueo
+    const id=req.user.id;
+    const{accion}=req.body;
+
+    if(accion!=='ON'||accion!=='OFF'){
+        return res.status(422).josn({
+            success:false,
+            mensaje:'ESTADO DESCONOCIDO'
+        });
+    }
+
+    accion==='ON'?publicarMQTT(topicoSeguridad,'BLOQUEADO'):publicarMQTT(topicoSeguridad,'DESBLOQUEADO');
+
+    try{
+        const query=`INSERT INTO historial_acciones(usuario_id,accion,resultado) values($1,$2,$3) RETURNING 1`;
+        const valores=[id,accion,accion==='ON'?'BLOQUEADO':'DESBLOQUEADO'];
+
+        const respuesta=await pool.query(query,valores);
+
+        if(respuesta.rows.length===0){
+            console.log('sin resultado');
+            return res.status(400).json({
+                success:false,
+                mensaje:'Sin resultados de BD'
+            });
+        }
+
+        return res.status(200).json({
+            success:true,
+            mensaje:respuesta.rows[0]
+        });
+    }catch(err){
+        console.log(err);
+        return res.status(500).json({
+            success:false,
+            mensaje:'error del servidor'
+        });
+    }
+}
+
 module.exports = {
   cambiarLuz,
   abrirCerrarGarageAutomatico,
-  enviarUltimoDatoSensores
+  enviarUltimoDatoSensores,
+  controlPuertaPrincipal,
+  modoSeguro
 };
