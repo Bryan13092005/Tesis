@@ -110,35 +110,56 @@ const abrirCerrarGarageAutomatico= async(req,res)=>{ //PERMISO: garage
 
 const enviarUltimoDatoSensores= async(req,res)=>{//PERMISO: sensores
     try{
-        const query='SELECT * FROM "valorActual_sensores"';
+        const query='SELECT * FROM "valorActual_sensores" ORDER BY fecha_hora DESC NULLS LAST LIMIT 1';
 
         const respuesta=await pool.query(query);
 
         if (respuesta.rows.length === 0) {
-            return res.status(404).json({
+            return res.status(503).json({
                 success: false,
+                online: false,
                 error: 'Sin registros previos'
             });
         }
 
-        const temAmbiente=respuesta.rows[0].temperatura;
-        const humAmbiente=respuesta.rows[0].humedad;
-        const gas=respuesta.rows[0].gas;
-        const humPlanta=respuesta.rows[0].humedad_planta;
-        const gasEstado=respuesta.rows[0].estado_gas;
+        const lectura = respuesta.rows[0];
+        const fechaLectura = lectura.fecha_hora ? new Date(lectura.fecha_hora) : null;
+        const edadLectura = fechaLectura ? Date.now() - fechaLectura.getTime() : Infinity;
+        const tieneValorNumerico = [
+            lectura.temperatura,
+            lectura.humedad,
+            lectura.gas,
+            lectura.humedad_planta
+        ].some((valor) => valor !== null && valor !== undefined && valor !== '' && Number.isFinite(Number(valor)));
+        const tieneEstadoGas = ['NORMAL', 'ALERTA'].includes(lectura.estado_gas);
+        const fechaValida = fechaLectura && !Number.isNaN(fechaLectura.getTime());
+        const online = Boolean(fechaValida && edadLectura >= 0 && edadLectura <= 120000 && (tieneValorNumerico || tieneEstadoGas));
 
-        return res.status(200).json({
-            temAmbiente: temAmbiente,
-            humAmbiente: humAmbiente,
-            humPlanta: humPlanta,
-            gas: gas,
-            gasEstado: gasEstado
-        });
+        const respuestaSensores = {
+            success: online,
+            online,
+            ultimaLectura: fechaValida ? fechaLectura.toISOString() : null,
+            temAmbiente: lectura.temperatura,
+            humAmbiente: lectura.humedad,
+            humPlanta: lectura.humedad_planta,
+            gas: lectura.gas,
+            gasEstado: lectura.estado_gas
+        };
+
+        if (!online) {
+            return res.status(503).json({
+                ...respuestaSensores,
+                error: 'No hay datos recientes de sensores'
+            });
+        }
+
+        return res.status(200).json(respuestaSensores);
 
     }catch(err){
         console.log(err);
         return res.status(500).json({
             success: false,
+            online: false,
             mensaje: 'error del servidor'}
         );
     }
@@ -178,8 +199,8 @@ const modoSeguro=async (req,res)=>{//PERMISO: activarBloqueo
     const id=req.user.id;
     const{accion}=req.body;
 
-    if(accion!=='ON'||accion!=='OFF'){
-        return res.status(422).josn({
+    if(accion !== 'ON' && accion !== 'OFF'){
+        return res.status(422).json({
             success:false,
             mensaje:'ESTADO DESCONOCIDO'
         });

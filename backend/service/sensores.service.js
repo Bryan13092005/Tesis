@@ -1,5 +1,6 @@
 const client = require('../config/mqttClient');
 const { pool } = require('../config/supabase');
+const { emitWebsocketEvent } = require('./websocket.service');
 
 const tableName = '"valorActual_sensores"';
 
@@ -39,6 +40,7 @@ client.on('message', async (topic, message) => {
                     SET temperatura = $1,
                         fecha_hora = NOW()
                 `, [Number(valor)]);
+                emitWebsocketEvent('sensorActualizado', { sensor: 'temperatura', valor: Number(valor) });
 
                 break;
 
@@ -51,6 +53,7 @@ client.on('message', async (topic, message) => {
                     SET humedad = $1,
                         fecha_hora = NOW()
                 `, [Number(valor)]);
+                emitWebsocketEvent('sensorActualizado', { sensor: 'humedad_ambiente', valor: Number(valor) });
 
                 break;
 
@@ -63,6 +66,7 @@ client.on('message', async (topic, message) => {
                     SET gas = $1,
                         fecha_hora = NOW()
                 `, [Number(valor)]);
+                emitWebsocketEvent('sensorActualizado', { sensor: 'gas', valor: Number(valor) });
 
                 break;
 
@@ -75,6 +79,7 @@ client.on('message', async (topic, message) => {
                     SET humedad_planta = $1,
                         fecha_hora = NOW()
                 `, [Number(valor)]);
+                emitWebsocketEvent('sensorActualizado', { sensor: 'humedad_suelo', valor: Number(valor) });
 
                 break;
             case topicoEstadoGas:
@@ -83,6 +88,7 @@ client.on('message', async (topic, message) => {
                 if(estado==='ALERTA' || estado==='NORMAL'){
                     sensoresActuales.estado_gas=estado;
                     await pool.query(`UPDATE ${tableName} set estado_gas=$1,fecha_hora=NOW()`,[estado]);
+                    emitWebsocketEvent('sensorActualizado', { sensor: 'estado_gas', valor: estado });
                 }
         }
 

@@ -2,15 +2,16 @@ const express = require('express');
 const router = express.Router();
 
 const {verificarAuth,autorizarRol,accionesPermitidas} =require('../middleware/auth.js');
+const verificarSistemaOnline = require('../middleware/sistemaOnline.js');
 
 const {cambiarLuz,abrirCerrarGarageAutomatico,enviarUltimoDatoSensores,controlPuertaPrincipal,modoSeguro}=require('../controllers/Acciones/casa.controller.js');
 const {historialIngresos,historialLuces,historialSensores,historialAcciones}=require('../controllers/Acciones/historiales.controller.js')
 
-router.put('/cambiarLuz',verificarAuth,accionesPermitidas('controlLuces'),cambiarLuz);
-router.put('/abrirGarage',verificarAuth,accionesPermitidas('garage'),abrirCerrarGarageAutomatico);
+router.put('/cambiarLuz',verificarAuth,accionesPermitidas('controlLuces'),verificarSistemaOnline,cambiarLuz);
+router.put('/abrirGarage',verificarAuth,accionesPermitidas('garage'),verificarSistemaOnline,abrirCerrarGarageAutomatico);
 router.get('/datosSensores',verificarAuth,accionesPermitidas('sensores'), enviarUltimoDatoSensores);
-router.put('/abrirPuerta',verificarAuth,accionesPermitidas('puertaPrincipal'),controlPuertaPrincipal);
-router.post('/modoSeguro',verificarAuth,accionesPermitidas('activarBloqueo'),modoSeguro);
+router.put('/abrirPuerta',verificarAuth,accionesPermitidas('puertaPrincipal'),verificarSistemaOnline,controlPuertaPrincipal);
+router.post('/modoSeguro',verificarAuth,accionesPermitidas('activarBloqueo'),verificarSistemaOnline,modoSeguro);
 
 router.get('/historial/ingresos',verificarAuth,accionesPermitidas('ingresosH'),historialIngresos);
 router.get('/historial/luces',verificarAuth,accionesPermitidas('lucesH'),historialLuces);

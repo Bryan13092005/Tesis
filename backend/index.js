@@ -1,9 +1,15 @@
 const express = require('express');
+const http = require('http');
 const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT;
+const server = http.createServer(app);
+const { initializeWebsocket } = require('./service/websocket.service');
+
+initializeWebsocket(server);
+
 require('./config/mqttClient');
 require('./service/sensores.service');
 require('./service/historialSensores.service');
@@ -36,7 +42,7 @@ app.use('/api/acciones', accionesRoutes);
 app.use('/api/clientes', clientesRoutes);
 
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`🚀 Servidor Express corriendo en: http://localhost:${PORT}`);
 });
 

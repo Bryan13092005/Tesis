@@ -143,7 +143,7 @@ const cambiarEstadoAcceso = async (req, res) => {
             });
         }
 
-        const query = `UPDATE credenciales SET activo = $1 WHERE id = $2 AND "usosPermitidos">0 RETURNING identificador`;
+        const query = `UPDATE credenciales SET activo = $1 WHERE id = $2 AND ("usosPermitidos" IS NULL OR "usosPermitidos">0) RETURNING identificador`;
         const values = [activo, accesoId];
 
         const resultado = await pool.query(query, values);

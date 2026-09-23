@@ -1,5 +1,6 @@
 const client = require('../config/mqttClient');
 const { pool } = require('../config/supabase');
+const { emitWebsocketEvent } = require('./websocket.service');
 
 const tableName = '"dispositivos"';
 
@@ -43,6 +44,7 @@ client.on('message', async (topic, message) => {
                     UPDATE ${tableName}
                     SET estado = $1 WHERE id = $2
                 `, [estadosActuales.bano, idBano]);
+                emitWebsocketEvent('luzActualizada', { luz: 'baño', estado: estadosActuales.bano ? 'ENCENDIDO' : 'APAGADO' });
 
                 break;
 
@@ -58,6 +60,7 @@ client.on('message', async (topic, message) => {
                     UPDATE ${tableName}
                     SET estado = $1 WHERE id = $2
                 `, [estadosActuales.dormitorio, idDormitorio]);
+                emitWebsocketEvent('luzActualizada', { luz: 'dormitorio', estado: estadosActuales.dormitorio ? 'ENCENDIDO' : 'APAGADO' });
 
                 break;
 
@@ -73,6 +76,7 @@ client.on('message', async (topic, message) => {
                     UPDATE ${tableName}
                     SET estado = $1 WHERE id = $2
                 `, [estadosActuales.sala, idSala]);
+                emitWebsocketEvent('luzActualizada', { luz: 'sala-comedor', estado: estadosActuales.sala ? 'ENCENDIDO' : 'APAGADO' });
 
                 break;
 
@@ -87,6 +91,7 @@ client.on('message', async (topic, message) => {
                     UPDATE ${tableName}
                     SET estado = $1 WHERE id = $2
                 `, [estadosActuales.cocina, idCocina]);
+                emitWebsocketEvent('luzActualizada', { luz: 'cocina', estado: estadosActuales.cocina ? 'ENCENDIDO' : 'APAGADO' });
 
                 break;
 
@@ -101,6 +106,7 @@ client.on('message', async (topic, message) => {
                     UPDATE ${tableName}
                     SET estado = $1 WHERE id = $2
                 `, [estadosActuales.pasillo, idPasillo]);
+                emitWebsocketEvent('luzActualizada', { luz: 'pasillo', estado: estadosActuales.pasillo ? 'ENCENDIDO' : 'APAGADO' });
 
                 break;
         }

@@ -6,16 +6,35 @@ const verUsuarios = async (req, res) => {
         const query = `SELECT * FROM perfiles`;
         const resultado = await pool.query(query);
 
-        if (resultado.rows.length === 0) {
-            return res.status(404).json({
+        const { data: authData, error: authError } = await supabaseAdminClient.auth.admin.listUsers({
+            page: 1,
+            perPage: 1000
+        });
+
+        if (authError) {
+            return res.status(400).json({
                 success: false,
-                error: 'No se encontraron usuarios'
+                error: `Error al obtener usuarios de Supabase Auth: ${authError.message}`
             });
         }
 
+        const perfiles = new Map(resultado.rows.map((perfil) => [perfil.id, perfil]));
+        const usuarios = authData.users.map((usuario) => ({
+            ...perfiles.get(usuario.id),
+            id: usuario.id,
+            uuid: usuario.id,
+            email: usuario.email,
+            user_metadata: {
+                ...usuario.user_metadata,
+                uuid: usuario.id
+            },
+            created_at: usuario.created_at,
+            last_sign_in_at: usuario.last_sign_in_at
+        }));
+
         return res.status(200).json({
             success: true,
-            data: resultado.rows
+            data: usuarios
         });
 
     }catch (error) {
@@ -171,6 +190,24 @@ const actualizarPerfilUsuario = async (req, res) => {
 
         const cambiosAuth = {};
 
+        if (nombre !== undefined || apellido !== undefined) {
+            const { data: authUser, error: authUserError } = await supabaseAdminClient.auth.admin.getUserById(usuarioId);
+
+            if (authUserError) {
+                return res.status(400).json({
+                    success: false,
+                    error: `Error al obtener los metadatos de Supabase Auth: ${authUserError.message}`
+                });
+            }
+
+            cambiosAuth.user_metadata = {
+                ...authUser.user.user_metadata,
+                uuid: usuarioId,
+                ...(nombre !== undefined ? { nombre } : {}),
+                ...(apellido !== undefined ? { apellido } : {})
+            };
+        }
+
         if (email !== undefined) {
             cambiosAuth.email = email;
         }
@@ -279,10 +316,27 @@ const crearUsuario = async (req, res) => {
             });
         }
 
+        const { data: usuarioActualizado, error: metadataError } = await supabaseAdminClient.auth.admin.updateUserById(
+            data.user.id,
+            {
+                user_metadata: {
+                    ...data.user.user_metadata,
+                    uuid: data.user.id
+                }
+            }
+        );
+
+        if (metadataError) {
+            return res.status(400).json({
+                success: false,
+                error: `Usuario creado, pero no se pudieron guardar sus metadatos: ${metadataError.message}`
+            });
+        }
+
         return res.status(201).json({
             success: true,
             message: 'Usuario creado correctamente',
-            usuario: data.user
+            usuario: usuarioActualizado.user
         });
     }catch (error) {
         console.error('Error al crear usuario:', error);
@@ -350,12 +404,41 @@ const cambiarPermisosUsuario = async (req, res) => {
     // ==========================================
 
     try{
+        const { data: authUser, error: authUserError } = await supabaseAdminClient.auth.admin.getUserById(usuarioId);
+
+        if (authUserError) {
+            return res.status(400).json({
+                success: false,
+                error: `Error al obtener los metadatos de Supabase Auth: ${authUserError.message}`
+            });
+        }
+
         await pool.query(
             `UPDATE perfiles
             SET "permisosAcceso" = $1
             WHERE id = $2 RETURNING *`,
             [JSON.stringify(nuevosPermisos), usuarioId]
         );
+
+        const { error: metadataError } = await supabaseAdminClient.auth.admin.updateUserById(usuarioId, {
+            user_metadata: {
+                ...authUser.user.user_metadata,
+                uuid: usuarioId,
+                permisos: JSON.stringify(nuevosPermisos)
+            }
+        });
+
+        if (metadataError) {
+            return res.status(400).json({
+                success: false,
+                error: `Perfil actualizado, pero no se pudieron guardar los metadatos: ${metadataError.message}`
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: 'Permisos del usuario actualizados correctamente.'
+        });
 
     } catch (error) {
         console.error('Error actualizando permisos en Postgres:', error);
