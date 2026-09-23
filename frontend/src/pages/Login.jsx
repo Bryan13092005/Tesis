@@ -1,15 +1,17 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { ArrowRight, Eye, EyeOff, Home, LockKeyhole, Mail } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import ThemeToggle from '../components/ThemeToggle'
 
 function Login() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { iniciarSesion } = useAuth()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
+  const [error, setError] = useState(location.state?.message || '')
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
 
@@ -46,6 +48,7 @@ function Login() {
       </section>
 
       <section className="login-panel">
+        <ThemeToggle />
         <div className="login-form-wrap">
           <p className="form-kicker">BIENVENIDO DE NUEVO</p>
           <h2>Inicia sesión</h2>

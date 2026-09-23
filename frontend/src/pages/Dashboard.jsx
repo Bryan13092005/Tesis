@@ -1,50 +1,11 @@
-import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import { Activity, Clock3, DoorOpen, Home, LogOut, Settings, ShieldCheck, UserRound, Users, Wifi } from 'lucide-react'
-import api from '../services/api'
-import { supabase } from '../services/supabase'
+import ThemeToggle from '../components/ThemeToggle'
 
 function Dashboard() {
   const navigate = useNavigate()
-  const { user, loading, cerrarSesion } = useAuth()
-  const [perfil, setPerfil] = useState(null)
-  const [profileLoading, setProfileLoading] = useState(true)
-  const [profileError, setProfileError] = useState('')
-
-  useEffect(() => {
-    const obtenerPerfil = async () => {
-      if (!user) {
-        setProfileLoading(false)
-        return
-      }
-
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
-
-      if (sessionError || !sessionData.session) {
-        setProfileError('No se pudo validar la sesión.')
-        setProfileLoading(false)
-        return
-      }
-
-      try {
-        const { data } = await api.get('/api/clientes/perfil', {
-          headers: {
-            Authorization: `Bearer ${sessionData.session.access_token}`,
-          },
-        })
-
-        setPerfil(data.data ?? null)
-      } catch (error) {
-        console.error('Error obteniendo perfil:', error)
-        setProfileError('No se pudo cargar la información del usuario.')
-      } finally {
-        setProfileLoading(false)
-      }
-    }
-
-    obtenerPerfil()
-  }, [user])
+  const { user, perfil, loading, cerrarSesion } = useAuth()
 
   const rol = perfil?.rol?.toLowerCase() ?? ''
   const permisosOriginales = perfil?.permisos ?? perfil?.permisosAcceso
@@ -105,6 +66,7 @@ function Dashboard() {
         <div className="header-user">
           <span className="avatar">{(perfil?.nombre || user?.email || 'U').charAt(0).toUpperCase()}</span>
           <span className="user-name">{perfil?.nombre || 'Mi cuenta'}</span>
+          <ThemeToggle />
           <button className="logout-button" type="button" onClick={handleLogout} aria-label="Cerrar sesión" title="Cerrar sesión"><LogOut size={17} /></button>
         </div>
       </header>
@@ -115,8 +77,6 @@ function Dashboard() {
           <div className="online-status"><span /> Sistema conectado</div>
         </div>
 
-        {profileLoading && <p className="profile-loading">Sincronizando permisos...</p>}
-        {profileError && <p className="form-error" role="alert">{profileError}</p>}
         <div className="dashboard-grid">
           <article className="status-card featured-card"><div className="card-heading"><span>ESTADO GENERAL</span><ShieldCheck size={19} /></div><div className="big-status">Todo en orden</div><p>Tu hogar funciona con normalidad.</p><div className="status-progress"><span /></div><small>Actualizado hace un momento</small></article>
           <article className="status-card"><div className="card-heading"><span>ACTIVIDAD</span><Activity size={19} /></div><div className="metric">24<span>°C</span></div><p>Temperatura interior</p><div className="metric-detail"><Wifi size={15} /> Sensores activos</div></article>
