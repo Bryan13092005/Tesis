@@ -1,5 +1,5 @@
 const { pool } = require('../config/supabase');
-const supabase = require('../config/database');
+const { supabaseAdminClient } = require('../config/supabaseAdmin');
 
 const actualizarPerfil=async(req, res)=> {
 
@@ -79,7 +79,8 @@ const actualizarPerfil=async(req, res)=> {
 
         if (Object.keys(cambiosAuth).length > 0) {
 
-            const { error } = await supabase.auth.updateUser(
+            const { error } = await supabaseAdminClient.auth.admin.updateUserById(
+                usuarioId,
                 cambiosAuth
             );
 

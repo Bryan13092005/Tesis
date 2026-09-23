@@ -22,7 +22,12 @@ const verPerfil = async (req, res) => {
 
         return res.status(200).json({
             success: true,
-            data: resultado.rows[0]
+            data: {
+                ...resultado.rows[0],
+                id: req.user.id,
+                email: req.user.email,
+                user_metadata: req.user.user_metadata
+            }
         });
 
     } catch (error) {

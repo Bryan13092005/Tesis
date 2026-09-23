@@ -99,7 +99,7 @@ const historialIngresos=async(req,res)=>{//PERMISO: ingresosH
 
     let query = `
         SELECT *
-        FROM "historial_Luces'
+        FROM historial_ingresos
         WHERE 1=1
     `;
 
@@ -146,7 +146,7 @@ const historialAcciones=async(req,res)=>{//PERMISO: seguroH
 
     let query = `
         SELECT *
-        FROM "historial_acciones'
+        FROM historial_acciones
         WHERE 1=1
     `;
 
