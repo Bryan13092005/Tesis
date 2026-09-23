@@ -36,6 +36,25 @@ async function verificarAuth(req, res, next) {
         // Guardamos el usuario autenticado
         req.user = user;
 
+        const perfil = await pool.query(
+            'SELECT estado FROM perfiles WHERE id = $1',
+            [user.id]
+        );
+
+        if (perfil.rows.length === 0) {
+            return res.status(403).json({
+                success: false,
+                error: 'Perfil de usuario no encontrado'
+            });
+        }
+
+        if (!perfil.rows[0].estado) {
+            return res.status(403).json({
+                success: false,
+                error: 'Tu usuario está bloqueado'
+            });
+        }
+
         next();
 
     } catch (error) {
