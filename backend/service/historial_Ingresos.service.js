@@ -1,5 +1,6 @@
 const { pool } = require('../config/supabase');
 const client = require('../config/mqttClient');
+const { emitWebsocketEvent } = require('./websocket.service');
 
 const topic = 'casa/garaje/estado';
 const idGarage = '22d6391c-4d1a-4676-97ed-2bfc782ff4ef';
@@ -84,6 +85,8 @@ client.on('message', async (receivedTopic, message) => {
 
                 console.log('Ingreso de garaje registrado');
             }
+
+            emitWebsocketEvent('garajeActualizado', { estado });
 
         } catch (err) {
             console.error('Error procesando garaje:', err);
@@ -178,6 +181,7 @@ client.on('message', async (receivedTopic, message) => {
             }
 
             console.log(`Estado puerta principal: ${estado}`);
+            emitWebsocketEvent('puertaActualizada', { estado });
 
             // =============================================
             // REGISTRAR INGRESO
