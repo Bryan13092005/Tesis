@@ -6,6 +6,7 @@ const topicAccesosRFID = '/accesos/RFID';
 const topic = '/casa/enviar/codigos';
 
 const client = require('../config/mqttClient');
+const { emitWebsocketEvent } = require('./websocket.service');
 
 client.subscribe(topic, (error) => {
 
@@ -31,7 +32,7 @@ client.on('message', async (receivedTopic, message) => {
     try {
 
         const query = `
-            SELECT id, "usosPermitidos"
+            SELECT id, "usosPermitidos", "nombreUsuario"
             FROM credenciales
             WHERE tipo = $1
             AND identificador = $2
@@ -43,6 +44,12 @@ client.on('message', async (receivedTopic, message) => {
 
         if (respuesta.rows.length === 0) {
             console.log('Credencial no disponible o inactiva');
+            emitWebsocketEvent('accesoDenegado', {
+                tipo,
+                identificador,
+                fecha: new Date().toISOString(),
+                motivo: 'Credencial no disponible o inactiva'
+            });
             return;
         }
 
@@ -55,6 +62,13 @@ client.on('message', async (receivedTopic, message) => {
 
         if (usos === null) {
             console.log("CREDENCIAL CON USOS ILIMITADOS");
+            emitWebsocketEvent('accesoRegistrado', {
+                tipo,
+                identificador,
+                nombre: respuesta.rows[0].nombreUsuario,
+                puerta: 'PRINCIPAL',
+                fecha: new Date().toISOString()
+            });
             return;
         }
 
@@ -64,6 +78,12 @@ client.on('message', async (receivedTopic, message) => {
 
         if (usos <= 0) {
             console.log("CREDENCIAL SIN USOS DISPONIBLES");
+            emitWebsocketEvent('accesoDenegado', {
+                tipo,
+                identificador,
+                fecha: new Date().toISOString(),
+                motivo: 'Credencial sin usos disponibles'
+            });
             return;
         }
 
@@ -108,6 +128,14 @@ client.on('message', async (receivedTopic, message) => {
         }
 
         console.log("ACTUALIZACIÓN EXITOSA");
+
+        emitWebsocketEvent('accesoRegistrado', {
+            tipo,
+            identificador,
+            nombre: respuesta.rows[0].nombreUsuario,
+            puerta: 'PRINCIPAL',
+            fecha: new Date().toISOString()
+        });
 
         // ==========================================
         // LLEGÓ A CERO
