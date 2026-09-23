@@ -4,9 +4,21 @@ require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT;
+require('./config/mqttClient');
+require('./service/sensores.service');
+require('./service/historialSensores.service');
+require('./service/luces.service.js');
+require('./service/escucharCodigos.service.js');
+require('./service/historial_Ingresos.service.js');
 
-const authRoutes = require('./routes/users/auth.routes.js');
-const accionesRoutes=require('./routes/admin/acciones.routes.js');
+const { escucharInicio } = require('./service/escucharInicio.service.js');
+
+escucharInicio();
+
+const authRoutes = require('./routes/auth.routes.js');
+const adminUserRoutes=require('./routes/admin/admin.users.routes.js');
+const adminAccesosRoutes=require('./routes/admin/admin.accesos.routes.js');
+const accionesRoutes=require('./routes/general.routes.js');
 const clientesRoutes=require('./routes/users/clientes.routes.js');
 
 app.use(cors());
@@ -17,9 +29,11 @@ app.get('/', (req, res) => {
   res.json({ mensaje: '¡Servidor Express funcionando correctamente!' });
 });
 
-app.use('/api/auth', authRoutes);
-//app.use('/api/productos', accionesRoutes);
-//app.use('/api/clientes', clientesRoutes);
+app.use('/api', authRoutes);
+app.use('/api/admin/users', adminUserRoutes);
+app.use('/api/admin/accesos', adminAccesosRoutes);
+app.use('/api/acciones', accionesRoutes);
+app.use('/api/clientes', clientesRoutes);
 
 
 app.listen(PORT, () => {
