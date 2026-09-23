@@ -1,15 +1,19 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { ArrowRight, Eye, EyeOff, Home, LockKeyhole, Mail } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import ThemeToggle from '../components/ThemeToggle'
 
 function Login() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { iniciarSesion } = useAuth()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
+  const [error, setError] = useState(location.state?.message || '')
   const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -17,10 +21,7 @@ function Login() {
     setError('')
     setLoading(true)
 
-    const { data, error } = await iniciarSesion(
-      email,
-      password
-    )
+    const { data, error } = await iniciarSesion(email, password)
 
     if (error) {
       setError('Correo o contraseña incorrectos.')
@@ -36,73 +37,50 @@ function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+    <main className="login-page">
+      <section className="login-showcase">
+        <div className="brand-mark"><Home size={18} strokeWidth={2.5} /></div>
+        <p className="eyebrow">CONTROL INTELIGENTE</p>
+        <h1>Tu hogar,<br /><em>en equilibrio.</em></h1>
+        <p className="showcase-copy">Una forma más simple de cuidar, controlar y entender cada espacio de tu casa.</p>
+        <div className="showcase-line" />
+        <span className="showcase-meta">SISTEMA DOMÓTICO · 01</span>
+      </section>
 
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
+      <section className="login-panel">
+        <ThemeToggle />
+        <div className="login-form-wrap">
+          <p className="form-kicker">BIENVENIDO DE NUEVO</p>
+          <h2>Inicia sesión</h2>
+          <p className="form-intro">Accede a tu panel de control.</p>
 
-        <div className="text-center mb-8">
-
-          <h1 className="text-3xl font-bold text-gray-800">
-            Casa Inteligente
-          </h1>
-
-          <p className="text-gray-500 mt-2">
-            Inicia sesión para continuar
-          </p>
-
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-5">
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Correo electrónico
-            </label>
-
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="correo@ejemplo.com"
-              required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Contraseña
-            </label>
-
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          {error && (
-            <div className="bg-red-100 text-red-700 px-4 py-3 rounded-lg text-sm">
-              {error}
+          <form onSubmit={handleSubmit} className="login-form">
+            <label htmlFor="email">Correo electrónico</label>
+            <div className="input-wrap">
+              <Mail size={18} aria-hidden="true" />
+              <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@correo.com" autoComplete="email" required />
             </div>
-          )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-3 rounded-lg transition"
-          >
-            {loading ? 'Iniciando sesión...' : 'Iniciar sesión'}
-          </button>
+            <label htmlFor="password">Contraseña</label>
+            <div className="input-wrap">
+              <LockKeyhole size={18} aria-hidden="true" />
+              <input id="password" type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Tu contraseña" autoComplete="current-password" required />
+              <button type="button" className="icon-button" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}>
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
 
-        </form>
+            {error && <p className="form-error" role="alert">{error}</p>}
 
-      </div>
-
-    </div>
+            <button type="submit" className="submit-button" disabled={loading}>
+              {loading ? 'Verificando...' : 'Entrar'}
+              {!loading && <ArrowRight size={18} />}
+            </button>
+          </form>
+          <p className="security-note">Tu sesión está protegida por Supabase Auth.</p>
+        </div>
+      </section>
+    </main>
   )
 }
 
