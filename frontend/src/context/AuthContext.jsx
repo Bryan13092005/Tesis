@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { supabase } from '../services/supabase'
 import api from '../services/api'
 
@@ -6,14 +6,21 @@ const AuthContext = createContext()
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
+  const [accessToken, setAccessToken] = useState(null)
   const [perfil, setPerfil] = useState(null)
   const [loading, setLoading] = useState(true)
   const [authError, setAuthError] = useState('')
+  const preserveAuthError = useRef(false)
 
   const validarSesion = async (session) => {
     if (!session?.access_token) {
       setUser(null)
+      setAccessToken(null)
       setPerfil(null)
+      if (preserveAuthError.current) {
+        preserveAuthError.current = false
+        return false
+      }
       setAuthError('Debes iniciar sesión para acceder al dashboard.')
       return false
     }
@@ -30,14 +37,20 @@ export function AuthProvider({ children }) {
       }
 
       setUser(session.user)
+      setAccessToken(session.access_token)
       setPerfil(data.data)
       setAuthError('')
       return true
     } catch (error) {
       console.error('Error validando la sesión:', error)
       setUser(null)
+      setAccessToken(null)
       setPerfil(null)
-      setAuthError(error.response?.data?.error || 'La sesión no es válida o el usuario no existe.')
+      const mensaje = error.response?.status === 403
+        ? 'Usuario bloqueado.'
+        : error.response?.data?.error || 'La sesión no es válida o el usuario no existe.'
+      setAuthError(mensaje)
+      preserveAuthError.current = true
       await supabase.auth.signOut()
       return false
     }
@@ -57,17 +70,22 @@ export function AuthProvider({ children }) {
 
     obtenerSesion()
 
+    const validarSesionPeriodicamente = window.setInterval(() => {
+      supabase.auth.getSession().then(({ data }) => {
+        if (data.session) validarSesion(data.session)
+      })
+    }, 60000)
+
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
-        setLoading(true)
         await validarSesion(session)
-        setLoading(false)
       }
     )
 
     return () => {
+      window.clearInterval(validarSesionPeriodicamente)
       subscription.unsubscribe()
     }
   }, [])
@@ -80,6 +98,8 @@ export function AuthProvider({ children }) {
   }
 
   const cerrarSesion = async () => {
+    preserveAuthError.current = false
+    setAuthError('')
     return await supabase.auth.signOut()
   }
 
@@ -87,6 +107,7 @@ export function AuthProvider({ children }) {
     <AuthContext.Provider
       value={{
         user,
+        accessToken,
         perfil,
         loading,
         authError,
