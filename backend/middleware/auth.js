@@ -36,6 +36,25 @@ async function verificarAuth(req, res, next) {
         // Guardamos el usuario autenticado
         req.user = user;
 
+        const perfil = await pool.query(
+            'SELECT estado FROM perfiles WHERE id = $1',
+            [user.id]
+        );
+
+        if (perfil.rows.length === 0) {
+            return res.status(403).json({
+                success: false,
+                error: 'Perfil de usuario no encontrado'
+            });
+        }
+
+        if (!perfil.rows[0].estado) {
+            return res.status(403).json({
+                success: false,
+                error: 'Tu usuario está bloqueado'
+            });
+        }
+
         next();
 
     } catch (error) {
@@ -125,8 +144,78 @@ function autorizarRol(rolNecesario) {
     };
 }
 
+function accionesPermitidas(permisoNecesario) {
+
+    return async function (req, res, next) {
+
+        const usuarioId = req.user.id;
+
+        try {
+
+            const resultado = await pool.query(
+                'SELECT "permisosAcceso" FROM perfiles WHERE id = $1',
+                [usuarioId]
+            );
+
+            if (resultado.rows.length === 0) {
+                return res.status(404).json({
+                    success: false,
+                    error: 'Perfil de usuario no encontrado'
+                });
+            }
+            console.log('Permisos del usuario:', resultado.rows[0].permisosAcceso);
+
+            const permisos = resultado.rows[0].permisosAcceso;
+            console.log('Permisos del usuario:', permisos);
+
+            if (!permisos) {
+                return res.status(403).json({
+                    success: false,
+                    error: 'No tienes permisos asignados'
+                });
+            }
+
+            // Acceso total
+            if (permisos.trim() === 'ALL') {
+                return next();
+            }
+
+            let permisosUsuario;
+
+            try {
+                permisosUsuario = JSON.parse(permisos);
+            } catch (error) {
+                return res.status(500).json({
+                    success: false,
+                    error: 'Formato de permisos inválido'
+                });
+            }
+
+            // Verificar si el permiso solicitado existe
+            if (!permisosUsuario.includes(permisoNecesario)) {
+                return res.status(403).json({
+                    success: false,
+                    error: 'No tienes permiso para realizar esta acción'
+                });
+            }
+
+            next();
+
+        } catch (error) {
+
+            console.error('Error verificando permisos:', error);
+
+            return res.status(500).json({
+                success: false,
+                error: 'Error interno del servidor'
+            });
+        }
+    };
+}
+
 
 module.exports = {
     verificarAuth,
-    autorizarRol
+    autorizarRol,
+    accionesPermitidas
 };
