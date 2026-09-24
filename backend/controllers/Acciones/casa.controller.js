@@ -222,6 +222,10 @@ const modoSeguro=async (req,res)=>{//PERMISO: activarBloqueo
             });
         }
 
+        emitWebsocketEvent('modoSeguroActualizado', {
+            estado: accion === 'ON' ? 'BLOQUEADO' : 'DESBLOQUEADO'
+        });
+
         return res.status(200).json({
             success:true,
             mensaje:respuesta.rows[0]
@@ -234,6 +238,31 @@ const modoSeguro=async (req,res)=>{//PERMISO: activarBloqueo
         });
     }
 }
+
+const obtenerEstadoModoSeguro = async (req, res) => {
+    try {
+        const resultado = await pool.query(
+            `SELECT resultado
+             FROM historial_acciones
+             WHERE resultado IN ('BLOQUEADO', 'DESBLOQUEADO')
+             ORDER BY fecha_hora DESC
+             LIMIT 1`
+        );
+
+        const estado = resultado.rows[0]?.resultado || 'DESBLOQUEADO';
+        return res.status(200).json({
+            success: true,
+            estado,
+            activo: estado === 'BLOQUEADO'
+        });
+    } catch (error) {
+        console.error('Error obteniendo estado del modo seguro:', error);
+        return res.status(500).json({
+            success: false,
+            error: 'No se pudo obtener el estado del modo seguro.'
+        });
+    }
+};
 
 const obtenerEstadoLuces = async (req, res) => {
     try {
@@ -269,5 +298,6 @@ module.exports = {
   enviarUltimoDatoSensores,
   controlPuertaPrincipal,
     modoSeguro,
-    obtenerEstadoLuces
+    obtenerEstadoLuces,
+    obtenerEstadoModoSeguro
 };
