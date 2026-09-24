@@ -1,6 +1,8 @@
 const { pool } = require('../config/supabase');
 const { sensoresActuales } = require('./sensores.service');
 
+let ultimaLecturaGuardada = null;
+
 setInterval(async () => {
 
     try {
@@ -13,6 +15,11 @@ setInterval(async () => {
             sensoresActuales.estado_gas===null
         ) {
             console.log('Todavía no hay datos de sensores para guardar.');
+            return;
+        }
+
+        if (!sensoresActuales.ultimaActualizacion || sensoresActuales.ultimaActualizacion === ultimaLecturaGuardada) {
+            console.log('No hay una lectura nueva de sensores para guardar.');
             return;
         }
 
@@ -34,6 +41,7 @@ setInterval(async () => {
         ]);
 
         console.log('📊 Historial de sensores guardado');
+        ultimaLecturaGuardada = sensoresActuales.ultimaActualizacion;
 
     } catch (error) {
         console.error('Error guardando historial:', error);

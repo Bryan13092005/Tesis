@@ -111,7 +111,13 @@ const abrirCerrarGarageAutomatico= async(req,res)=>{ //PERMISO: garage
 
 const enviarUltimoDatoSensores= async(req,res)=>{//PERMISO: sensores
     try{
-        const query='SELECT * FROM "valorActual_sensores" ORDER BY fecha_hora DESC NULLS LAST LIMIT 1';
+        const query=`
+            SELECT *
+            FROM "valorActual_sensores"
+            WHERE fecha_hora <= NOW()
+            ORDER BY fecha_hora DESC NULLS LAST
+            LIMIT 1
+        `;
 
         const respuesta=await pool.query(query);
 
@@ -134,7 +140,7 @@ const enviarUltimoDatoSensores= async(req,res)=>{//PERMISO: sensores
         ].some((valor) => valor !== null && valor !== undefined && valor !== '' && Number.isFinite(Number(valor)));
         const tieneEstadoGas = ['NORMAL', 'ALERTA'].includes(lectura.estado_gas);
         const fechaValida = fechaLectura && !Number.isNaN(fechaLectura.getTime());
-        const online = Boolean(fechaValida && edadLectura >= 0 && edadLectura <= 120000 && (tieneValorNumerico || tieneEstadoGas));
+        const online = Boolean(fechaValida && edadLectura >= 0 && edadLectura <= 60000 && (tieneValorNumerico || tieneEstadoGas));
 
         const respuestaSensores = {
             success: online,
