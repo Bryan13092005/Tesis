@@ -235,10 +235,39 @@ const modoSeguro=async (req,res)=>{//PERMISO: activarBloqueo
     }
 }
 
+const obtenerEstadoLuces = async (req, res) => {
+    try {
+        const luces = {
+            baño: '79ded62b-55b0-4d69-a435-de6951db09ea',
+            dormitorio: '1657eadf-bb4b-48b4-8593-468cea08ccdd',
+            sala: 'adaceb18-dc63-4d5f-936b-3433d90563d1',
+            cocina: 'a68f2d16-aa6c-48a2-8e6e-7bacf2b9383a',
+            pasillo: '34e68874-95f5-4aff-ac96-125cec25a4c3'
+        };
+
+        const resultado = await pool.query(
+            'SELECT id, estado FROM dispositivos WHERE id = ANY($1::uuid[])',
+            [Object.values(luces)]
+        );
+        const estados = Object.fromEntries(
+            Object.entries(luces).map(([habitacion, id]) => [
+                habitacion,
+                resultado.rows.find((fila) => fila.id === id)?.estado ?? null
+            ])
+        );
+
+        return res.status(200).json({ success: true, data: estados });
+    } catch (error) {
+        console.error('Error obteniendo estado de luces:', error);
+        return res.status(500).json({ success: false, error: 'No se pudo obtener el estado de las luces.' });
+    }
+};
+
 module.exports = {
   cambiarLuz,
   abrirCerrarGarageAutomatico,
   enviarUltimoDatoSensores,
   controlPuertaPrincipal,
-  modoSeguro
+    modoSeguro,
+    obtenerEstadoLuces
 };
