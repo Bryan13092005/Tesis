@@ -435,3 +435,77 @@ button { cursor: pointer; }
   .welcome-row { align-items: flex-start; flex-direction: column; margin-bottom: 32px; }
   .online-status { padding: 0; }
 }
+
+@media (max-width: 820px) {
+  .dashboard-header { align-items: center; column-gap: 14px; }
+  .dashboard-brand { flex: 1 1 auto; min-width: 0; }
+  .header-user { flex: 0 0 auto; gap: 7px; }
+  .main-nav { display: flex; gap: 2px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+  .main-nav::-webkit-scrollbar { display: none; }
+  .nav-dropdown { flex: 0 0 auto; }
+  .nav-item { min-height: 48px; padding: 0 10px; }
+  .nav-dropdown-menu { position: fixed; top: 124px; left: 20px; right: 20px; width: auto; min-width: 0; }
+  .dashboard-content, .profile-panel, .sensors-panel, .controls-panel, .history-panel, .admin-users-panel { padding-top: 38px; padding-bottom: 48px; }
+  .welcome-row, .sensors-heading, .history-heading, .admin-users-heading { gap: 16px; }
+  .system-status-panel { max-width: none; padding: 22px; }
+  .dashboard-grid { gap: 12px; }
+  .status-card, .sensor-card, .control-card, .profile-summary, .profile-form, .admin-user-form { padding: 20px; }
+  .light-controls { grid-template-columns: 1fr; gap: 0; }
+  .light-row { min-height: 48px; }
+  .history-filters { align-items: stretch; }
+  .history-filters label { flex: 1 1 190px; flex-wrap: wrap; }
+  .history-filters input { flex: 1 1 130px; min-width: 0; margin-left: 0; }
+  .history-filter-button, .history-clear-button { flex: 1 1 120px; }
+  .admin-users-table { min-width: 760px; }
+}
+
+@media (max-width: 520px) {
+  .login-showcase { min-height: 285px; padding: 28px 22px; }
+  .login-showcase .brand-mark { margin-bottom: 27px; }
+  .login-showcase h1 { font-size: clamp(39px, 12vw, 48px); }
+  .showcase-copy { max-width: 290px; font-size: 14px; }
+  .login-panel { min-height: calc(100svh - 285px); padding: 38px 22px 46px; }
+  .login-panel > .theme-toggle { align-self: flex-end; }
+  .login-form-wrap h2 { font-size: 32px; }
+  .form-intro { margin-bottom: 28px; }
+  .dashboard-header { padding-right: 14px; padding-left: 14px; }
+  .dashboard-brand { font-size: 12px; }
+  .dashboard-brand .brand-mark.small { width: 27px; height: 27px; }
+  .header-user .theme-toggle { margin-left: 0; padding: 0 7px; }
+  .header-user .theme-toggle > span:first-child { display: none; }
+  .main-nav { margin-right: -14px; margin-left: -14px; padding: 0 14px; }
+  .nav-item { gap: 6px; padding: 0 8px; font-size: 10px; letter-spacing: .04em; }
+  .nav-dropdown-menu { top: 122px; left: 14px; right: 14px; }
+  .dashboard-content, .profile-panel, .sensors-panel, .controls-panel, .history-panel, .admin-users-panel { padding-right: 16px; padding-left: 16px; }
+  .welcome-row h1 { max-width: 100%; font-size: clamp(32px, 10vw, 43px); line-height: 1.05; overflow-wrap: anywhere; }
+  .dashboard-subtitle { font-size: 13px; line-height: 1.5; }
+  .system-status-panel { align-items: flex-start; gap: 14px; padding: 18px; }
+  .system-status-panel strong { font-size: 19px; }
+  .system-status-panel p { font-size: 12px; line-height: 1.45; }
+  .metric { margin-top: 30px; font-size: 38px; }
+  .big-status { margin-top: 30px; }
+  .sensors-heading h2, .controls-heading h2, .history-heading h2, .admin-users-heading h2, .profile-heading h2 { font-size: 34px; }
+  .sensors-live-indicator { padding-bottom: 0; }
+  .sensor-card { min-height: 166px; }
+  .sensor-card > strong { margin-top: 30px; font-size: 36px; }
+  .control-card-heading { align-items: flex-start; flex-direction: column; gap: 7px; }
+  .control-card-heading > span { line-height: 1.4; }
+  .light-row { align-items: flex-start; flex-direction: column; gap: 9px; padding: 13px 0; }
+  .light-row > div, .security-buttons { width: 100%; }
+  .light-row button, .security-buttons button { flex: 1; min-height: 38px; }
+  .control-action-button { width: 100%; justify-content: center; }
+  .history-heading, .admin-users-heading { align-items: flex-start; flex-direction: column; }
+  .history-refresh { align-self: flex-start; }
+  .history-filters { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .history-filters label { display: grid; grid-template-columns: auto 1fr; gap: 6px; }
+  .history-filters input { grid-column: 1 / -1; width: 100%; }
+  .history-filter-button, .history-clear-button { width: 100%; }
+  .admin-profile-modal { padding: 20px; }
+  .admin-profile-modal-heading h2 { font-size: 26px; }
+  .admin-profile-actions { align-items: stretch; flex-direction: column; }
+  .admin-profile-actions .submit-button, .profile-password-button { width: 100%; }
+  .admin-users-layout { gap: 14px; }
+  .admin-user-form { padding: 18px; }
+  .admin-users-table-wrap { margin-right: -16px; margin-left: -16px; border-right: 0; border-left: 0; border-radius: 0; }
+  .admin-empty-state { padding: 52px 18px; }
+}
