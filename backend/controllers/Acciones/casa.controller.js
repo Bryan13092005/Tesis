@@ -25,6 +25,30 @@ const topicoEstadoPuerta = "casa/puerta/estado";
 const topicoComandoPuerta = "casa/puerta/comando";
 const topicoSeguridad = "casa/seguridad";
 
+const consultarModoSeguro = async () => {
+    const query = `SELECT resultado FROM historial_acciones ORDER BY fecha_hora DESC LIMIT 1`;
+    const respuesta = await pool.query(query);
+    return respuesta.rows[0]?.resultado === 'BLOQUEADO';
+};
+
+const estadoModoSeguro = async (req, res) => {
+    try {
+        const modoActivo = await consultarModoSeguro();
+
+        return res.status(200).json({
+            success: true,
+            activado: modoActivo,
+            resultado: modoActivo ? 'BLOQUEADO' : 'DESBLOQUEADO'
+        });
+    } catch (err) {
+        console.log(err);
+        return res.status(500).json({
+            success: false,
+            mensaje: 'error del servidor'
+        });
+    }
+};
+
 const cambiarLuz = async(req, res) => {
     const userID = req.user.id; // Obtener el usuario autenticado desde el middleware de autenticación
     const { estado,habitacion } = req.body;
@@ -80,6 +104,13 @@ async function guardarHistorial(id,puerta) {
 
 const abrirCerrarGarageAutomatico= async(req,res)=>{ //PERMISO: garage
     const id = req.user.id;
+
+    if (await consultarModoSeguro()) {
+        return res.status(423).json({
+            success: false,
+            mensaje: 'El modo seguro está activado.'
+        });
+    }
     
     publicarMQTT(topicoComandoGarage,'ABRIR_GARAJE');
     
@@ -148,6 +179,13 @@ const controlPuertaPrincipal=async(req,res)=>{//PERMISO: puertaPrincipal
     const id=req.user.id;
     const {accion}=req.body;
 
+    if (await consultarModoSeguro()) {
+        return res.status(423).json({
+            success: false,
+            mensaje: 'El modo seguro está activado.'
+        });
+    }
+
     accion==='ABRIR'?publicarMQTT(topicoComandoPuerta,'ABRIR_PUERTA'):res.status(400).json({mensaje: 'comando incorrecto'});
 
     client.subscribe(topicoEstadoPuerta, (error) => {
@@ -178,8 +216,8 @@ const modoSeguro=async (req,res)=>{//PERMISO: activarBloqueo
     const id=req.user.id;
     const{accion}=req.body;
 
-    if(accion!=='ON'||accion!=='OFF'){
-        return res.status(422).josn({
+    if(accion!=='ON' && accion!=='OFF'){
+        return res.status(422).json({
             success:false,
             mensaje:'ESTADO DESCONOCIDO'
         });
@@ -203,7 +241,8 @@ const modoSeguro=async (req,res)=>{//PERMISO: activarBloqueo
 
         return res.status(200).json({
             success:true,
-            mensaje:respuesta.rows[0]
+            mensaje:respuesta.rows[0],
+            activado: accion === 'ON'
         });
     }catch(err){
         console.log(err);
@@ -219,5 +258,6 @@ module.exports = {
   abrirCerrarGarageAutomatico,
   enviarUltimoDatoSensores,
   controlPuertaPrincipal,
-  modoSeguro
+    modoSeguro,
+    estadoModoSeguro
 };

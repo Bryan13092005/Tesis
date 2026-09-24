@@ -61,6 +61,23 @@ function ControlsPanel({ sensorStatus }) {
     }
   }, [accessToken, hasLightPermission])
 
+  useEffect(() => {
+    if (!accessToken) return undefined
+
+    let active = true
+    api.get('/api/acciones/modoSeguro', { headers: { Authorization: `Bearer ${accessToken}` } })
+      .then(({ data }) => {
+        if (active) setSecurity(data.activado === true)
+      })
+      .catch((requestError) => {
+        if (active) setError(requestError.response?.data?.error || 'No se pudo consultar el modo seguro.')
+      })
+
+    return () => {
+      active = false
+    }
+  }, [accessToken])
+
   const request = async (key, callback, successMessage) => {
     if (!controlsEnabled) {
       setError(sensorStatus === 'checking' ? 'Espera a que se verifique el estado del sistema.' : 'Los controles están deshabilitados porque el sistema está offline.')
@@ -81,6 +98,7 @@ function ControlsPanel({ sensorStatus }) {
   }
 
   const changeLight = (room, state) => request(`light-${room}`, () => api.put('/api/acciones/cambiarLuz', { habitacion: room, estado: state }, { headers: { Authorization: `Bearer ${accessToken}` } }), `Luz de ${room} ${state ? 'encendida' : 'apagada'}.`).then(() => setLights((current) => ({ ...current, [room]: state })))
+  const securityLocked = security !== false
 
   return (
     <section className="controls-panel">
@@ -91,11 +109,11 @@ function ControlsPanel({ sensorStatus }) {
 
       {can('controlLuces') && <article className="control-card control-lights"><div className="control-card-heading"><div><Lightbulb size={19} /><h3>Luces</h3></div><span>{lightsLoading ? 'Consultando estado real...' : '5 habitaciones'}</span></div><div className="light-controls">{rooms.map((room) => <div className="light-row" key={room}><span>{room}</span><div><button className={lights[room] === true ? 'is-selected' : ''} type="button" disabled={!controlsEnabled || lightsLoading || busy === `light-${room}`} onClick={() => changeLight(room, true)}>Encender</button><button className={lights[room] === false ? 'is-selected is-off' : ''} type="button" disabled={!controlsEnabled || lightsLoading || busy === `light-${room}`} onClick={() => changeLight(room, false)}>Apagar</button></div></div>)}</div></article>}
 
-      {can('garage') && <article className="control-card"><div className="control-card-heading"><div><CarFront size={19} /><h3>Garaje</h3></div><span>Acceso automático</span></div><p>Envía la orden de apertura al garaje.</p><button className="control-action-button" type="button" disabled={!controlsEnabled || busy === 'garage'} onClick={() => request('garage', () => api.put('/api/acciones/abrirGarage', {}, { headers: { Authorization: `Bearer ${accessToken}` } }), 'Orden de apertura enviada al garaje.')}><CarFront size={17} /> {busy === 'garage' ? 'Esperando respuesta...' : 'Abrir garaje'}</button></article>}
+      {can('garage') && <article className="control-card"><div className="control-card-heading"><div><CarFront size={19} /><h3>Garaje</h3></div><span>Acceso automático</span></div><p>Envía la orden de apertura al garaje.</p><button className="control-action-button" type="button" disabled={!controlsEnabled || securityLocked || busy === 'garage'} onClick={() => request('garage', () => api.put('/api/acciones/abrirGarage', {}, { headers: { Authorization: `Bearer ${accessToken}` } }), 'Orden de apertura enviada al garaje.')}><CarFront size={17} /> {busy === 'garage' ? 'Esperando respuesta...' : 'Abrir garaje'}</button></article>}
 
-      {can('puertaPrincipal') && <article className="control-card"><div className="control-card-heading"><div><DoorOpen size={19} /><h3>Puerta principal</h3></div><span>Acceso principal</span></div><p>Envía la orden de apertura a la puerta principal.</p><button className="control-action-button" type="button" disabled={!controlsEnabled || busy === 'door'} onClick={() => request('door', () => api.put('/api/acciones/abrirPuerta', { accion: 'ABRIR' }, { headers: { Authorization: `Bearer ${accessToken}` } }), 'Orden de apertura enviada a la puerta.')}><DoorOpen size={17} /> {busy === 'door' ? 'Esperando respuesta...' : 'Abrir puerta'}</button></article>}
+      {can('puertaPrincipal') && <article className="control-card"><div className="control-card-heading"><div><DoorOpen size={19} /><h3>Puerta principal</h3></div><span>Acceso principal</span></div><p>Envía la orden de apertura a la puerta principal.</p><button className="control-action-button" type="button" disabled={!controlsEnabled || securityLocked || busy === 'door'} onClick={() => request('door', () => api.put('/api/acciones/abrirPuerta', { accion: 'ABRIR' }, { headers: { Authorization: `Bearer ${accessToken}` } }), 'Orden de apertura enviada a la puerta.')}><DoorOpen size={17} /> {busy === 'door' ? 'Esperando respuesta...' : 'Abrir puerta'}</button></article>}
 
-      {can('activarBloqueo') && <article className="control-card security-control"><div className="control-card-heading"><div>{security ? <LockKeyhole size={19} /> : <UnlockKeyhole size={19} />}<h3>Modo seguro</h3></div><span>{security ? 'Activado' : 'Desactivado'}</span></div><p>Bloquea o desbloquea el sistema de seguridad.</p><div className="security-buttons"><button className={security === true ? 'is-selected' : ''} type="button" disabled={!controlsEnabled || busy === 'security'} onClick={() => request('security', () => api.post('/api/acciones/modoSeguro', { accion: 'ON' }, { headers: { Authorization: `Bearer ${accessToken}` } }), 'Modo seguro activado.').then(() => setSecurity(true))}><LockKeyhole size={16} /> Activar</button><button className={security === false ? 'is-off' : ''} type="button" disabled={!controlsEnabled || busy === 'security'} onClick={() => request('security', () => api.post('/api/acciones/modoSeguro', { accion: 'OFF' }, { headers: { Authorization: `Bearer ${accessToken}` } }), 'Modo seguro desactivado.').then(() => setSecurity(false))}><UnlockKeyhole size={16} /> Desactivar</button></div></article>}
+      {can('activarBloqueo') && <article className="control-card security-control"><div className="control-card-heading"><div>{security ? <LockKeyhole size={19} /> : <UnlockKeyhole size={19} />}<h3>Modo seguro</h3></div><span>{security === null ? 'Consultando...' : security ? 'Activado' : 'Desactivado'}</span></div><p>Bloquea o desbloquea el sistema de seguridad.</p><div className="security-buttons"><button className={security === true ? 'is-selected' : ''} type="button" disabled={!controlsEnabled || busy === 'security'} onClick={() => request('security', () => api.post('/api/acciones/modoSeguro', { accion: 'ON' }, { headers: { Authorization: `Bearer ${accessToken}` } }), 'Modo seguro activado.').then(() => setSecurity(true))}><LockKeyhole size={16} /> Activar</button><button className={security === false ? 'is-off' : ''} type="button" disabled={!controlsEnabled || busy === 'security'} onClick={() => request('security', () => api.post('/api/acciones/modoSeguro', { accion: 'OFF' }, { headers: { Authorization: `Bearer ${accessToken}` } }), 'Modo seguro desactivado.').then(() => setSecurity(false))}><UnlockKeyhole size={16} /> Desactivar</button></div></article>}
 
       {!['controlLuces', 'garage', 'puertaPrincipal', 'activarBloqueo'].some(can) && <div className="admin-empty-state">No tienes permisos de control asignados.</div>}
     </section>

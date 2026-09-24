@@ -64,7 +64,7 @@ const eliminarMiUsuario = async (req, res) => {
 
         // 1. Contamos cuántos administradores quedan en total en el sistema
         const resultado = await pool.query(
-            "SELECT COUNT(*) FROM perfiles WHERE rol = 'ADMINISTRADOR'"
+            "SELECT COUNT(*) FROM perfiles WHERE LOWER(rol) IN ('admin', 'administrador')"
         );
 
         // pg mapea el COUNT(*) en la propiedad rows[0].count como un string
