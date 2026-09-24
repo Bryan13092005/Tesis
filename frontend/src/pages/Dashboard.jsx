@@ -147,7 +147,7 @@ function Dashboard() {
 
   const handleLogout = async () => {
     await cerrarSesion()
-    navigate('/login', { replace: true })
+    navigate('/', { replace: true })
   }
 
   if (loading) {
@@ -175,7 +175,7 @@ function Dashboard() {
           ))}
         </nav>
         <div className="header-user">
-          {esAdmin ? <AdminProfileMenu onLogout={() => navigate('/login', { replace: true })} /> : <span className="avatar">{(perfil?.nombre || user?.email || 'U').charAt(0).toUpperCase()}</span>}
+          {esAdmin ? <AdminProfileMenu onLogout={() => navigate('/', { replace: true })} /> : <span className="avatar">{(perfil?.nombre || user?.email || 'U').charAt(0).toUpperCase()}</span>}
           <span className="user-name">{perfil?.nombre || 'Mi cuenta'}</span>
           <ThemeToggle />
           <button className="logout-button" type="button" onClick={handleLogout} aria-label="Cerrar sesión" title="Cerrar sesión"><LogOut size={17} /></button>

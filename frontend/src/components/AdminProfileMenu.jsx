@@ -92,7 +92,7 @@ function AdminProfileMenu({ onLogout }) {
       <button className="avatar" type="button" onClick={() => setOpen((current) => !current)} onMouseEnter={() => setOpen(true)} aria-haspopup="true" aria-expanded={open} title="Perfil de administrador">
         {(perfil?.nombre || user?.email || 'U').charAt(0).toUpperCase()}
       </button>
-      {open && <div className="admin-profile-dropdown">
+      {open && <div className="admin-profile-dropdown" onMouseEnter={() => setOpen(true)}>
         <strong>{perfil?.nombre || 'Administrador'}</strong>
         <span>{user?.email}</span>
         <button type="button" onClick={() => { setFormOpen(true); setOpen(false); setError(''); setNotice('') }}><Settings size={15} /> Editar perfil</button>
