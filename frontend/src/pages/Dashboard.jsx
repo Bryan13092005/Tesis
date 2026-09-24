@@ -8,6 +8,7 @@ import AdminAccesses from '../components/AdminAccesses'
 import ControlsPanel from '../components/ControlsPanel'
 import SensorsPanel from '../components/SensorsPanel'
 import ProfilePanel from '../components/ProfilePanel'
+import AdminProfileMenu from '../components/AdminProfileMenu'
 import HistoryPanel from '../components/HistoryPanel'
 import api from '../services/api'
 import { connectSocket } from '../services/socket'
@@ -174,7 +175,7 @@ function Dashboard() {
           ))}
         </nav>
         <div className="header-user">
-          <span className="avatar">{(perfil?.nombre || user?.email || 'U').charAt(0).toUpperCase()}</span>
+          {esAdmin ? <AdminProfileMenu onLogout={() => navigate('/login', { replace: true })} /> : <span className="avatar">{(perfil?.nombre || user?.email || 'U').charAt(0).toUpperCase()}</span>}
           <span className="user-name">{perfil?.nombre || 'Mi cuenta'}</span>
           <ThemeToggle />
           <button className="logout-button" type="button" onClick={handleLogout} aria-label="Cerrar sesión" title="Cerrar sesión"><LogOut size={17} /></button>
