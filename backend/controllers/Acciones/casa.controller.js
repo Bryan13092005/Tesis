@@ -1,6 +1,7 @@
 const {publicarMQTT} = require('../../service/publicarMQTT.service');
 const { pool } = require('../../config/supabase');
 const client =require('../../config/mqttClient');
+const { emitWebsocketEvent } = require('../../service/websocket.service');
 
 const topics = {
     baño: 'casa/luz/baño',
