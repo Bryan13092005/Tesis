@@ -5,7 +5,8 @@ async function verificarSistemaOnline(req, res, next) {
         const resultado = await pool.query(`
             SELECT temperatura, humedad, gas, humedad_planta, estado_gas
             FROM "valorActual_sensores"
-            WHERE fecha_hora >= NOW() - INTERVAL '2 minutes'
+                        WHERE fecha_hora >= NOW() - INTERVAL '1 minute'
+                            AND fecha_hora <= NOW()
             ORDER BY fecha_hora DESC
             LIMIT 1
         `);

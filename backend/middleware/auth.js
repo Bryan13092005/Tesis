@@ -163,10 +163,7 @@ function accionesPermitidas(permisoNecesario) {
                     error: 'Perfil de usuario no encontrado'
                 });
             }
-            console.log('Permisos del usuario:', resultado.rows[0].permisosAcceso);
-
             const permisos = resultado.rows[0].permisosAcceso;
-            console.log('Permisos del usuario:', permisos);
 
             if (!permisos) {
                 return res.status(403).json({
