@@ -144,7 +144,7 @@ function escucharInicio() {
 
             console.log('Sincronización de accesos terminada');
 
-            const queryModoSeguro=`SELECT resultado FROM historial_acciones ORDER BY fecha_hora ASC LIMIT 1`;
+            const queryModoSeguro=`SELECT resultado FROM historial_acciones ORDER BY fecha_hora DESC LIMIT 1`;
 
             const respuestaModoSeguro=await pool.query(queryModoSeguro);
 
