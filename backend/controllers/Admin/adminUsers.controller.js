@@ -165,22 +165,24 @@ const cambiarClaveUsuario = async (req, res) => {
 const actualizarPerfilUsuario = async (req, res) => {
     try {
         const usuarioId = req.params.id;
-        const { nombre, apellido, email, password } = req.body;
+        const { nombre, apellido, email, password, rol } = req.body;
 
         // ==========================================
         // ACTUALIZAR PERFIL EN POSTGRES
         // ==========================================
 
-        if (nombre !== undefined || apellido !== undefined) {
+        if (nombre !== undefined || apellido !== undefined || rol !== undefined) {
             const nuevoNombre = nombre !== undefined ? nombre : null;
             const nuevoApellido = apellido !== undefined ? apellido : null;
+            const nuevoRol = rol !== undefined ? rol : null;
 
             await pool.query(
                 `UPDATE perfiles
                 SET nombre = $1,
-                    apellido = $2
-                WHERE id = $3`,
-                [nuevoNombre, nuevoApellido, usuarioId]
+                    apellido = $2,
+                    rol = COALESCE($3, rol)
+                WHERE id = $4`,
+                [nuevoNombre, nuevoApellido, nuevoRol, usuarioId]
             );
         }
 
@@ -190,7 +192,7 @@ const actualizarPerfilUsuario = async (req, res) => {
 
         const cambiosAuth = {};
 
-        if (nombre !== undefined || apellido !== undefined) {
+        if (nombre !== undefined || apellido !== undefined || rol !== undefined) {
             const { data: authUser, error: authUserError } = await supabaseAdminClient.auth.admin.getUserById(usuarioId);
 
             if (authUserError) {
@@ -204,7 +206,8 @@ const actualizarPerfilUsuario = async (req, res) => {
                 ...authUser.user.user_metadata,
                 uuid: usuarioId,
                 ...(nombre !== undefined ? { nombre } : {}),
-                ...(apellido !== undefined ? { apellido } : {})
+                ...(apellido !== undefined ? { apellido } : {}),
+                ...(rol !== undefined ? { rol } : {})
             };
         }
 
@@ -284,8 +287,10 @@ const cambiarEstadoUsuario = async (req, res) => {
 const crearUsuario = async (req, res) => {
     try {
         const { nombre, apellido, email, password, rol, permisos} = req.body;
+        const esAdministrador = ['admin', 'administrador'].includes(String(rol).toLowerCase());
+        const permisosNormalizados = esAdministrador ? 'ALL' : permisos;
         // Validaciones básicas de entrada
-        if (!nombre || !apellido || !email || !password || !rol || !permisos) {
+        if (!nombre || !apellido || !email || !password || !rol || !permisosNormalizados) {
             return res.status(400).json({
                 success: false,
                 error: 'Todos los campos (nombre, apellido, email, password, rol, permisos) son requeridos.'
@@ -305,7 +310,12 @@ const crearUsuario = async (req, res) => {
         const { data, error: supabaseError } = await supabaseAdminClient.auth.admin.createUser({
             email,
             password,
-            user_metadata: { nombre, apellido, rol, permisos: JSON.stringify(permisos) },
+            user_metadata: {
+                nombre,
+                apellido,
+                rol,
+                permisos: esAdministrador ? 'ALL' : JSON.stringify(permisosNormalizados),
+            },
             email_confirm: true
         });
 
@@ -413,18 +423,25 @@ const cambiarPermisosUsuario = async (req, res) => {
             });
         }
 
+        const perfil = await pool.query(
+            'SELECT rol FROM perfiles WHERE id = $1',
+            [usuarioId]
+        );
+        const esAdministrador = ['admin', 'administrador'].includes(String(perfil.rows[0]?.rol).toLowerCase());
+        const permisosNormalizados = esAdministrador ? 'ALL' : nuevosPermisos;
+
         await pool.query(
             `UPDATE perfiles
             SET "permisosAcceso" = $1
             WHERE id = $2 RETURNING *`,
-            [JSON.stringify(nuevosPermisos), usuarioId]
+            [esAdministrador ? 'ALL' : JSON.stringify(permisosNormalizados), usuarioId]
         );
 
         const { error: metadataError } = await supabaseAdminClient.auth.admin.updateUserById(usuarioId, {
             user_metadata: {
                 ...authUser.user.user_metadata,
                 uuid: usuarioId,
-                permisos: JSON.stringify(nuevosPermisos)
+                permisos: esAdministrador ? 'ALL' : JSON.stringify(permisosNormalizados)
             }
         });
 
