@@ -56,7 +56,7 @@ const historialLuces=async(req,res)=>{//PERMISO: lucesH
             p.nombre,
             p.apellido,
             d.nombre AS nombre_dispositivo
-        FROM historial_luces AS hl
+        FROM "historial_Luces" AS hl
         JOIN perfiles AS p
             ON hl.user_id = p.id
         JOIN dispositivos AS d
