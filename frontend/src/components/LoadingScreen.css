@@ -1,0 +1,215 @@
+/* Estilos globales del contenedor de carga */
+.neon-loader-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #070a13;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  z-index: 9999;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Luces ambientales de fondo */
+.ambient-glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.25;
+  pointer-events: none;
+}
+
+.glow-1 {
+  width: 400px;
+  height: 400px;
+  background: #00f2fe;
+  top: 20%;
+  left: 30%;
+  animation: floatGlow 8s ease-in-out infinite alternate;
+}
+
+.glow-2 {
+  width: 450px;
+  height: 450px;
+  background: #4facfe;
+  bottom: 20%;
+  right: 30%;
+  animation: floatGlow 10s ease-in-out infinite alternate-reverse;
+}
+
+/* Estructura central */
+.loader-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+/* Anillos de Neón Giratorios */
+.rings-container {
+  position: relative;
+  width: 180px;
+  height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2.5rem;
+}
+
+.ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 3px solid transparent;
+}
+
+.ring-outer {
+  width: 100%;
+  height: 100%;
+  border-top-color: #00f2fe;
+  border-right-color: rgba(0, 242, 254, 0.2);
+  filter: drop-shadow(0 0 12px rgba(0, 242, 254, 0.8));
+  animation: spin 2s linear infinite;
+}
+
+.ring-middle {
+  width: 75%;
+  height: 75%;
+  border-bottom-color: #4facfe;
+  border-left-color: rgba(79, 172, 254, 0.2);
+  filter: drop-shadow(0 0 10px rgba(79, 172, 254, 0.8));
+  animation: spinReverse 1.5s linear infinite;
+}
+
+.ring-inner {
+  width: 50%;
+  height: 50%;
+  border-top-color: #00c6ff;
+  border-left-color: rgba(0, 198, 255, 0.2);
+  filter: drop-shadow(0 0 8px rgba(0, 198, 255, 0.8));
+  animation: spin 1s linear infinite;
+}
+
+.center-core {
+  width: 16px;
+  height: 16px;
+  background-color: #00f2fe;
+  border-radius: 50%;
+  box-shadow: 0 0 20px #00f2fe, 0 0 40px #00f2fe;
+  animation: pulseCore 1.5s ease-in-out infinite alternate;
+}
+
+/* Textos Neón */
+.text-container {
+  text-align: center;
+}
+
+.neon-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  letter-spacing: 0.35em;
+  color: #ffffff;
+  text-shadow: 
+    0 0 10px rgba(0, 242, 254, 0.8),
+    0 0 20px rgba(0, 242, 254, 0.5),
+    0 0 40px rgba(0, 242, 254, 0.3);
+  margin: 0;
+  padding-left: 0.35em; /* Compensar el letter-spacing */
+}
+
+.neon-subtitle {
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.4em;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: 0.75rem;
+  padding-left: 0.4em;
+  text-transform: uppercase;
+}
+
+/* Barra de progreso */
+.progress-bar-container {
+  width: 200px;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  margin-top: 2rem;
+  overflow: hidden;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.progress-bar-fill {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, #00c6ff, #00f2fe);
+  box-shadow: 0 0 10px #00f2fe;
+  animation: shimmerProgress 2s ease-in-out infinite;
+}
+
+/* Partículas animadas */
+.particles-container {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background-color: #00f2fe;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #00f2fe;
+  opacity: 0.5;
+  animation: floatParticle 6s infinite linear;
+}
+
+.particle-1  { top: 15%; left: 20%; animation-delay: 0s; }
+.particle-2  { top: 75%; left: 15%; animation-delay: 1s; }
+.particle-3  { top: 35%; left: 80%; animation-delay: 2s; }
+.particle-4  { top: 85%; left: 70%; animation-delay: 0.5s; }
+.particle-5  { top: 10%; left: 60%; animation-delay: 3s; }
+.particle-6  { top: 50%; left: 10%; animation-delay: 2.5s; }
+.particle-7  { top: 65%; left: 88%; animation-delay: 1.5s; }
+.particle-8  { top: 25%; left: 40%; animation-delay: 3.5s; }
+.particle-9  { top: 90%; left: 35%; animation-delay: 4s; }
+.particle-10 { top: 40%; left: 92%; animation-delay: 0.8s; }
+.particle-11 { top: 80%; left: 50%; animation-delay: 2.2s; }
+.particle-12 { top: 18%; left: 85%; animation-delay: 1.2s; }
+
+/* Keyframes de las animaciones */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes spinReverse {
+  0% { transform: rotate(360deg); }
+  100% { transform: rotate(0deg); }
+}
+
+@keyframes pulseCore {
+  0% { transform: scale(0.8); opacity: 0.7; }
+  100% { transform: scale(1.2); opacity: 1; }
+}
+
+@keyframes shimmerProgress {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes floatGlow {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(30px, -30px) scale(1.1); }
+}
+
+@keyframes floatParticle {
+  0% { transform: translateY(0) scale(1); opacity: 0; }
+  50% { opacity: 0.7; }
+  100% { transform: translateY(-100px) scale(0.3); opacity: 0; }
+}
