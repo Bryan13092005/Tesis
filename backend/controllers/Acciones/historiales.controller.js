@@ -50,9 +50,17 @@ const historialSensores=async(req,res)=>{//PERMISO: sesnsoresH
 const historialLuces=async(req,res)=>{//PERMISO: lucesH
     const {fechaInicio,fechaFin}=req.query;
 
-    let query = `
-        SELECT *
-        FROM "historial_Luces"
+        let query = `
+        SELECT
+            hl.*,
+            p.nombre,
+            p.apellido,
+            d.nombre AS nombre_dispositivo
+        FROM historial_luces AS hl
+        JOIN perfiles AS p
+            ON hl.user_id = p.id
+        JOIN dispositivos AS d
+            ON hl.dispositivo_id = d.id
         WHERE 1=1
     `;
 
@@ -98,8 +106,13 @@ const historialIngresos=async(req,res)=>{//PERMISO: ingresosH
     const {fechaInicio,fechaFin}=req.query;
 
     let query = `
-        SELECT *
-        FROM historial_ingresos
+        SELECT
+            hi.*,
+            p.nombre,
+            p.apellido
+        FROM historial_ingresos AS hi        
+        LEFT JOIN perfiles AS p
+            ON hi.id_usuario = p.id
         WHERE 1=1
     `;
 
@@ -145,8 +158,13 @@ const historialAcciones=async(req,res)=>{//PERMISO: seguroH
     const {fechaInicio,fechaFin}=req.query;
 
     let query = `
-        SELECT *
-        FROM historial_acciones
+        SELECT
+            ha.*,
+            p.nombre,
+            p.apellido
+        FROM historial_acciones AS ha
+        JOIN perfiles AS p
+            ON ha.usuario_id = p.id
         WHERE 1=1
     `;
 

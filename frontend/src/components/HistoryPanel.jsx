@@ -10,6 +10,38 @@ function formatValue(value) {
   return String(value)
 }
 
+function getHistoryColumns(row) {
+  const fields = Object.keys(row)
+  const hasJoinedName = fields.includes('nombre') && fields.includes('apellido')
+  const hasJoinedDevice = fields.includes('nombre_dispositivo')
+
+  return fields.reduce((columns, field) => {
+    if (hasJoinedName && ['user_id', 'id_usuario', 'usuario_id'].includes(field)) return columns
+    if (hasJoinedDevice && field === 'dispositivo_id') return columns
+
+    if (hasJoinedName && (field === 'nombre' || field === 'apellido')) {
+      if (!columns.includes('nombre_completo')) columns.push('nombre_completo')
+      return columns
+    }
+
+    columns.push(field)
+    return columns
+  }, [])
+}
+
+function getHistoryValue(row, column) {
+  if (column === 'nombre_completo') {
+    const nombreCompleto = [row.nombre, row.apellido]
+      .filter((value) => value !== null && value !== undefined && String(value).trim())
+      .map(String)
+      .join(' ')
+
+    return nombreCompleto || '-'
+  }
+
+  return formatValue(row[column])
+}
+
 function HistoryPanel({ title, description, endpoint }) {
   const { accessToken } = useAuth()
   const [rows, setRows] = useState([])
@@ -58,7 +90,7 @@ function HistoryPanel({ title, description, endpoint }) {
     }
   }, [endpoint, accessToken])
 
-  const columns = rows.length > 0 ? Object.keys(rows[0]) : []
+  const columns = rows.length > 0 ? getHistoryColumns(rows[0]) : []
 
   return (
     <section className="history-panel">
@@ -83,8 +115,8 @@ function HistoryPanel({ title, description, endpoint }) {
         {loading ? <div className="admin-empty-state">Cargando historial...</div> : rows.length === 0 ? <div className="admin-empty-state">No hay registros para mostrar.</div> : (
           <div className="history-table-scroll">
             <table className="history-table">
-              <thead><tr>{columns.map((column) => <th key={column}>{column.replaceAll('_', ' ')}</th>)}</tr></thead>
-              <tbody>{rows.map((row, index) => <tr key={row.id || `${row.fecha_hora || row.created_at || 'row'}-${index}`}>{columns.map((column) => <td key={column}>{formatValue(row[column])}</td>)}</tr>)}</tbody>
+              <thead><tr>{columns.map((column) => <th key={column}>{column === 'nombre_completo' ? 'Nombre y apellido' : column.replaceAll('_', ' ')}</th>)}</tr></thead>
+              <tbody>{rows.map((row, index) => <tr key={row.id || `${row.fecha_hora || row.created_at || 'row'}-${index}`}>{columns.map((column) => <td key={column}>{getHistoryValue(row, column)}</td>)}</tr>)}</tbody>
             </table>
           </div>
         )}
