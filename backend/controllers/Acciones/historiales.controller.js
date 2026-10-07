@@ -21,7 +21,7 @@ const historialSensores=async(req,res)=>{//PERMISO: sesnsoresH
         valores.push(`${fechaFin} 23:59:59.999999-05`);
     }
 
-    query += ` ORDER BY fecha_hora ASC`;
+    query += ` ORDER BY fecha_hora DESC`;
 
     try{
         const respuesta = await pool.query(query,valores);
@@ -68,7 +68,7 @@ const historialLuces=async(req,res)=>{//PERMISO: lucesH
         valores.push(`${fechaFin} 23:59:59.999999-05`);
     }
 
-    query += ` ORDER BY created_at ASC`;
+    query += ` ORDER BY created_at DESC`;
 
     try{
         const respuesta = await pool.query(query,valores);
@@ -115,7 +115,7 @@ const historialIngresos=async(req,res)=>{//PERMISO: ingresosH
         valores.push(`${fechaFin} 23:59:59.999999-05`);
     }
 
-    query += ` ORDER BY fecha_hora ASC`;
+    query += ` ORDER BY fecha_hora DESC`;
 
     try{
         const respuesta = await pool.query(query,valores);
@@ -162,7 +162,7 @@ const historialAcciones=async(req,res)=>{//PERMISO: seguroH
         valores.push(`${fechaFin} 23:59:59.999999-05`);
     }
 
-    query += ` ORDER BY fecha_hora ASC`;
+    query += ` ORDER BY fecha_hora DESC`;
 
     try{
         const respuesta = await pool.query(query,valores);
