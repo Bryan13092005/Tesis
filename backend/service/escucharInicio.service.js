@@ -50,12 +50,11 @@ function escucharInicio() {
 
             if (respuesta.rows.length === 0) {
                 console.log('No hay credenciales');
-                return;
+            } else {
+                console.log(
+                    `Se encontraron ${respuesta.rows.length} credenciales`
+                );
             }
-
-            console.log(
-                `Se encontraron ${respuesta.rows.length} credenciales`
-            );
 
             for (const credencial of respuesta.rows) {
 
@@ -144,7 +143,13 @@ function escucharInicio() {
 
             console.log('Sincronización de accesos terminada');
 
-            const queryModoSeguro=`SELECT resultado FROM historial_acciones ORDER BY fecha_hora DESC LIMIT 1`;
+            const queryModoSeguro=`
+                SELECT resultado
+                FROM historial_acciones
+                WHERE resultado IN ('BLOQUEADO', 'DESBLOQUEADO')
+                ORDER BY fecha_hora DESC
+                LIMIT 1
+            `;
 
             const respuestaModoSeguro=await pool.query(queryModoSeguro);
 

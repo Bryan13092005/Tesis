@@ -213,8 +213,6 @@ const modoSeguro=async (req,res)=>{//PERMISO: activarBloqueo
         });
     }
 
-    accion==='ON'?publicarMQTT(topicoSeguridad,'BLOQUEADO'):publicarMQTT(topicoSeguridad,'DESBLOQUEADO');
-
     try{
         const query=`INSERT INTO historial_acciones(usuario_id,accion,resultado) values($1,$2,$3) RETURNING 1`;
         const valores=[id,accion,accion==='ON'?'BLOQUEADO':'DESBLOQUEADO'];
@@ -229,6 +227,7 @@ const modoSeguro=async (req,res)=>{//PERMISO: activarBloqueo
             });
         }
 
+        publicarMQTT(topicoSeguridad, accion === 'ON' ? 'BLOQUEADO' : 'DESBLOQUEADO');
         emitWebsocketEvent('modoSeguroActualizado', {
             estado: accion === 'ON' ? 'BLOQUEADO' : 'DESBLOQUEADO'
         });
