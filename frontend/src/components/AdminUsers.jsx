@@ -16,6 +16,7 @@ const permissionOptions = [
 ]
 
 const permissionLabels = Object.fromEntries(permissionOptions)
+const allPermissions = permissionOptions.map(([permission]) => permission)
 
 const emptyForm = {
   nombre: '',
@@ -42,6 +43,10 @@ function getPermissionLabels(value) {
   const permissions = normalizePermissions(value)
   if (permissions.includes('ALL')) return ['Acceso total']
   return permissions.map((permission) => permissionLabels[permission] || permission)
+}
+
+function isAdministratorRole(role) {
+  return ['admin', 'administrador'].includes(String(role).toLowerCase())
 }
 
 const fetchUsers = (accessToken) => api.get('/api/admin/users/verUsuarios', {
@@ -96,7 +101,12 @@ function AdminUsers() {
 
   const updateField = (event) => {
     const { name, value } = event.target
-    setForm((current) => ({ ...current, [name]: value }))
+    setForm((current) => ({
+      ...current,
+      [name]: value,
+      ...(name === 'rol' && isAdministratorRole(value) ? { permisos: 'ALL' } : {}),
+      ...(name === 'rol' && !isAdministratorRole(value) && current.permisos === 'ALL' ? { permisos: [] } : {}),
+    }))
   }
 
   const togglePermission = (permission) => {
@@ -116,7 +126,9 @@ function AdminUsers() {
       email: selectedUser.email ?? '',
       password: '',
       rol: selectedUser.rol?.toLowerCase() ?? 'usuario',
-      permisos: normalizePermissions(selectedUser.permisosAcceso || selectedUser.user_metadata?.permisos),
+      permisos: isAdministratorRole(selectedUser.rol)
+        ? 'ALL'
+        : normalizePermissions(selectedUser.permisosAcceso || selectedUser.user_metadata?.permisos),
     })
     setError('')
     setNotice('')
@@ -139,14 +151,20 @@ function AdminUsers() {
           nombre: form.nombre,
           apellido: form.apellido,
           email: form.email,
+          rol: form.rol,
         }
         if (form.password) profileChanges.password = form.password
 
         await api.put(`/api/admin/users/actualizarPerfilUsuario/${editingUser.id}`, profileChanges, requestConfig)
-        await api.put(`/api/admin/users/cambiarPermisosUsuario/${editingUser.id}`, { nuevosPermisos: form.permisos }, requestConfig)
+        await api.put(`/api/admin/users/cambiarPermisosUsuario/${editingUser.id}`, {
+          nuevosPermisos: isAdministratorRole(form.rol) ? 'ALL' : form.permisos.includes('ALL') ? allPermissions : form.permisos,
+        }, requestConfig)
         setNotice('Usuario actualizado correctamente.')
       } else {
-        await api.post('/api/admin/users/crearUsuario', form, requestConfig)
+        await api.post('/api/admin/users/crearUsuario', {
+          ...form,
+          permisos: isAdministratorRole(form.rol) ? 'ALL' : form.permisos.includes('ALL') ? allPermissions : form.permisos,
+        }, requestConfig)
         setNotice('Usuario creado correctamente.')
       }
 
@@ -222,13 +240,13 @@ function AdminUsers() {
             <option value="usuario">Usuario</option>
             <option value="admin">Administrador</option>
           </select>
-          <fieldset className="permissions-fieldset">
+          {!isAdministratorRole(form.rol) && <fieldset className="permissions-fieldset">
             <legend>Permisos de acceso</legend>
             <label className="permission-all"><input type="checkbox" checked={form.permisos.includes('ALL')} onChange={() => setForm((current) => ({ ...current, permisos: current.permisos.includes('ALL') ? [] : ['ALL'] }))} /> Acceso total</label>
             {permissionOptions.map(([permission, label]) => (
               <label key={permission} className="permission-option"><input type="checkbox" checked={form.permisos.includes(permission) || form.permisos.includes('ALL')} disabled={form.permisos.includes('ALL')} onChange={() => togglePermission(permission)} /> {label}</label>
             ))}
-          </fieldset>
+          </fieldset>}
           <button className="submit-button" type="submit" disabled={saving}>{saving ? 'Guardando...' : <><Save size={16} /> {editingUser ? 'Guardar cambios' : 'Crear usuario'}</>}</button>
         </form>
 
