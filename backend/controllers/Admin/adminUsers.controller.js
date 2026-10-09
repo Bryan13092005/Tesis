@@ -1,6 +1,17 @@
 const { pool } = require('../../config/supabase');
 const {supabaseAdminClient} = require('../../config/supabaseAdmin');
 
+const esPasswordValida = (password) => (
+    typeof password === 'string' &&
+    password.length >= 6 &&
+    /[A-Z]/.test(password) &&
+    /[a-z]/.test(password) &&
+    /\d/.test(password) &&
+    /[^A-Za-z0-9\s]/.test(password)
+);
+
+const mensajePasswordInvalida = 'La contraseña debe tener al menos 6 caracteres e incluir una letra mayúscula, una minúscula, un número y un símbolo.';
+
 const verUsuarios = async (req, res) => {
     try{
         const query = `SELECT * FROM perfiles`;
@@ -131,10 +142,10 @@ const cambiarClaveUsuario = async (req, res) => {
             });
         }
 
-        if (nuevaPassword.length < 6) {
+        if (!esPasswordValida(nuevaPassword)) {
             return res.status(400).json({
                 success: false,
-                error: 'La contraseña debe tener al menos 6 caracteres.'
+                error: mensajePasswordInvalida
             });
         }
 
@@ -166,6 +177,13 @@ const actualizarPerfilUsuario = async (req, res) => {
     try {
         const usuarioId = req.params.id;
         const { nombre, apellido, email, password, rol } = req.body;
+
+        if (password !== undefined && !esPasswordValida(password)) {
+            return res.status(400).json({
+                success: false,
+                error: mensajePasswordInvalida
+            });
+        }
 
         // ==========================================
         // ACTUALIZAR PERFIL EN POSTGRES
@@ -297,6 +315,13 @@ const crearUsuario = async (req, res) => {
             });
         }
 
+        if (!esPasswordValida(password)) {
+            return res.status(400).json({
+                success: false,
+                error: mensajePasswordInvalida
+            });
+        }
+
         // permisos :[
         //     acceso1,
         //     acceso2,
@@ -367,10 +392,10 @@ const cambiarMiClave = async (req, res) => {
             });
         }
 
-        if (nuevaPassword.length < 6) {
+        if (!esPasswordValida(nuevaPassword)) {
             return res.status(400).json({
                 success: false,
-                error: 'La contraseña debe tener al menos 6 caracteres.'
+                error: mensajePasswordInvalida
             });
         }
 

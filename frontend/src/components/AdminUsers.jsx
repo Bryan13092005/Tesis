@@ -17,6 +17,8 @@ const permissionOptions = [
 
 const permissionLabels = Object.fromEntries(permissionOptions)
 const allPermissions = permissionOptions.map(([permission]) => permission)
+const passwordPattern = '(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[^A-Za-z0-9\\s]).{6,}'
+const passwordRequirements = 'Mínimo 6 caracteres, con una mayúscula, una minúscula, un número y un símbolo.'
 
 const emptyForm = {
   nombre: '',
@@ -234,7 +236,8 @@ function AdminUsers() {
           <label htmlFor="user-email">Correo electrónico</label>
           <input id="user-email" name="email" type="email" value={form.email} onChange={updateField} required />
           <label htmlFor="user-password">{editingUser ? 'Nueva contraseña (opcional)' : 'Contraseña'}</label>
-          <input id="user-password" name="password" type="password" minLength="6" value={form.password} onChange={updateField} required={!editingUser} />
+          <input id="user-password" name="password" type="password" minLength="6" pattern={passwordPattern} title={passwordRequirements} value={form.password} onChange={updateField} required={!editingUser} />
+          <small>{passwordRequirements}</small>
           <label htmlFor="user-role">Rol</label>
           <select id="user-role" name="rol" value={form.rol} onChange={updateField}>
             <option value="usuario">Usuario</option>
